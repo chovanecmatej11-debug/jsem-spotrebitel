@@ -106,6 +106,12 @@ def main(repo: str, popis: str) -> None:
                 raise RuntimeError(f"Do repozitáře se dostal zakázaný soubor {z}, nic neodesílám.")
 
         spust(["git", "add", "-A"], cwd=repo_dir)
+        # Při prvním odeslání nahrát i místní historii (od kdy sledujeme které weby), dál ji spravuje server
+        for s in ZE_SERVERU:
+            if not (repo_dir / s).exists() and (slozka / s).exists():
+                (repo_dir / s).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(slozka / s, repo_dir / s)
+                spust(["git", "add", "-f", s], cwd=repo_dir)
         zmeny = spust(["git", "status", "--porcelain"], cwd=repo_dir).stdout.strip().splitlines()
         if not zmeny:
             print("Na GitHubu už je aktuální verze, není co odesílat.", flush=True)
