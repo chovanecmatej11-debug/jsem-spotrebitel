@@ -1,0 +1,384 @@
+---
+nazev: Prověř firmu
+nadpis: Kolik pokut <em>už dostali?</em>
+popis: Kontroly a pokuty České obchodní inspekce u konkrétní firmy. Stačí název nebo IČO.
+kratky_popis: Kolikrát ČOI firmu kontrolovala a kolik pokut jí dala.
+na_uvod: ano
+poradi: 2
+hero_prekryv: ano
+---
+<style>
+  .stred { max-width: 900px; margin: -86px auto 0; position: relative; z-index: 3; }
+  .hledani-obal { position: relative; }
+  form.hledani { display: flex; gap: 10px; background: var(--bila); border-radius: 20px; padding: 10px; box-shadow: 0 20px 50px rgba(20,40,115,.25); border: 2px solid transparent; transition: border-color .15s; }
+  form.hledani:focus-within { border-color: var(--koral); }
+  form.hledani input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 20px; padding: 14px; color: var(--text); }
+  form.hledani button { border: 0; background: var(--karmin); color: var(--bila); font-weight: 700; font-size: 18px; padding: 0 32px; border-radius: 14px; }
+  form.hledani button:hover { background: var(--karmin2); }
+  .naseptavac { position: absolute; left: 0; right: 0; top: calc(100% + 8px); background: var(--bila); border-radius: 16px; box-shadow: 0 20px 50px rgba(20,40,115,.22); list-style: none; margin: 0; padding: 6px; z-index: 10; max-height: 420px; overflow-y: auto; }
+  .naseptavac li button { width: 100%; text-align: left; background: none; border: 0; padding: 11px 12px; border-radius: 11px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; color: var(--text); font: inherit; }
+  .naseptavac li button:hover, .naseptavac li button[aria-selected="true"] { background: var(--krem); }
+  .naseptavac .jm { font-weight: 600; overflow-wrap: anywhere; }
+  .naseptavac .po { grid-row: span 2; align-self: center; font-size: 13px; color: var(--tlum); text-align: right; white-space: nowrap; }
+  .naseptavac .po b { color: var(--karmin); }
+  .naseptavac .dr { font-size: 13px; color: var(--tlum); }
+  .naseptavac .nic { padding: 12px; color: var(--tlum); font-size: 15px; }
+  .info { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 16px 4px 0; font-size: 14px; color: var(--tlum); }
+  .info b { color: var(--kobalt); font-size: 15.5px; }
+  .info button { background: none; border: 0; padding: 0; color: var(--kobalt); text-decoration: underline; font-weight: 600; font: inherit; font-size: 14px; }
+  #vysledek { margin-top: 24px; }
+  #vysledek:empty { display: none; }
+  .karta { border-radius: 20px; overflow: hidden; background: var(--bila); box-shadow: var(--stin); animation: vjezd .25s ease-out; }
+  @keyframes vjezd { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .karta .hl { padding: 18px 22px; display: flex; gap: 14px; align-items: center; }
+  .karta .kr { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .karta .kr svg { width: 25px; height: 25px; }
+  .karta .hl h2 { margin: 0; font-family: var(--f-nadpis); font-size: clamp(21px, 3.6vw, 26px); line-height: 1.15; overflow-wrap: anywhere; }
+  .karta .hl .dom { display: block; font-weight: 500; font-size: 15px; opacity: .92; margin-top: 4px; }
+  .karta .tel { padding: 18px 22px 22px; }
+  .karta.v .hl { background: var(--karmin); color: var(--bila); }
+  .karta.v .kr { background: var(--bila); color: var(--karmin); }
+  .karta.o .hl { background: var(--nebe2); color: var(--kobalt); }
+  .karta.o .kr { background: var(--kobalt); color: var(--bila); }
+  .karta.n .hl { background: var(--krem2); color: var(--text); }
+  .karta.n .kr { background: var(--bila); color: var(--tlum); }
+  .souhrn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .souhrn div { background: var(--krem); border-radius: 14px; padding: 12px 14px; }
+  .souhrn b { display: block; font-family: var(--f-nadpis); font-size: clamp(24px, 4vw, 32px); line-height: 1.1; color: var(--kobalt); font-variant-numeric: tabular-nums; }
+  .souhrn span { font-size: 13.5px; color: var(--tlum); }
+  .souhrn .cervena b { color: var(--karmin); }
+  .tel p { margin: 0 0 14px; }
+  .tel h3 { font-size: 16px; margin: 20px 0 10px; }
+  ul.pokuty { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul.pokuty li { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline; padding: 11px 14px; border: 1px solid var(--okraj); border-radius: 12px; }
+  ul.pokuty .dt { font-size: 14px; color: var(--tlum); font-variant-numeric: tabular-nums; }
+  ul.pokuty .pr { font-size: 15px; overflow-wrap: anywhere; }
+  ul.pokuty .pr small { display: block; color: var(--tlum); font-size: 13px; margin-top: 2px; }
+  ul.pokuty .kc { font-weight: 700; color: var(--karmin); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ul.pokuty .kc.nula { color: var(--tlum); font-weight: 500; font-size: 13px; white-space: normal; text-align: right; max-width: 130px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .meta a, .meta span { background: var(--krem); color: var(--text); font-size: 13.5px; padding: 5px 12px; border-radius: 999px; }
+  .meta a { color: var(--kobalt); font-weight: 600; }
+  .vysvetlivka { font-size: 14px; color: var(--tlum); background: var(--krem); border-radius: 12px; padding: 12px 14px; margin-top: 16px; }
+  .vice { display: block; margin: 14px auto 0; font-weight: 600; background: var(--bila); color: var(--kobalt); border: 2px solid var(--kobalt); padding: 9px 20px; border-radius: 12px; }
+  .vice:hover { background: var(--nebe2); }
+  .cisla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .dlazdice { background: var(--bila); border-radius: 20px; padding: 22px; box-shadow: var(--stin); }
+  .dlazdice.tmava { background: var(--kobalt); color: var(--krem); position: relative; overflow: hidden; }
+  .dlazdice.tmava::after { content: ""; position: absolute; right: -50px; bottom: -50px; width: 140px; height: 140px; border-radius: 50%; background: var(--koral); }
+  .velke-cislo { font-family: var(--f-nadpis); font-weight: 900; font-size: clamp(36px, 5vw, 56px); line-height: 1; color: var(--kobalt); font-variant-numeric: tabular-nums; }
+  .dlazdice.tmava .velke-cislo { color: var(--krem); position: relative; z-index: 1; }
+  .dlazdice p { margin: 10px 0 0; color: var(--tlum); }
+  .dlazdice.tmava p { color: var(--nebe); position: relative; z-index: 1; }
+  .zebricky { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .zebricky h3 { margin: 0 0 12px; font-size: 17px; }
+  ol.zeb { list-style: none; margin: 0; padding: 0; counter-reset: z; display: grid; gap: 4px; }
+  ol.zeb li { counter-increment: z; }
+  ol.zeb button { width: 100%; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: none; border: 0; padding: 8px 6px; border-radius: 10px; font: inherit; color: var(--text); }
+  ol.zeb button::before { content: counter(z); width: 26px; height: 26px; border-radius: 50%; background: var(--kobalt); color: var(--bila); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+  ol.zeb button:hover { background: var(--krem); }
+  ol.zeb .jm { font-size: 15px; overflow-wrap: anywhere; }
+  ol.zeb .n { font-weight: 700; color: var(--karmin); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 14.5px; }
+  .nacitani { color: var(--tlum); font-size: 15px; padding: 6px 2px; }
+  @media (max-width: 760px) {
+    .stred { margin-top: -78px; }
+    form.hledani { flex-direction: column; padding: 8px; }
+    form.hledani input { font-size: 18px; padding: 12px; }
+    form.hledani button { padding: 14px; }
+    .karta .hl, .karta .tel { padding-left: 16px; padding-right: 16px; }
+    .karta .kr { width: 42px; height: 42px; }
+    .souhrn { grid-template-columns: 1fr 1fr; }
+    .souhrn div:first-child { grid-column: 1 / -1; }
+    ul.pokuty li { grid-template-columns: minmax(0, 1fr) auto; }
+    ul.pokuty .pr { grid-column: 1 / -1; grid-row: 2; }
+    .cisla, .zebricky { grid-template-columns: 1fr; }
+    .naseptavac { top: 72px; }
+  }
+</style>
+
+<div class="obal">
+  <div class="stred">
+    <div class="hledani-obal">
+      <form class="hledani" id="formular" autocomplete="off" role="search">
+        <label for="vstup" class="sr">Název firmy nebo IČO</label>
+        <input id="vstup" type="text" placeholder="Název firmy nebo IČO" spellcheck="false" autocapitalize="off"
+               role="combobox" aria-autocomplete="list" aria-controls="naseptavac" aria-expanded="false">
+        <button type="submit">Prověřit</button>
+      </form>
+      <ul class="naseptavac" id="naseptavac" role="listbox" hidden></ul>
+    </div>
+    <div class="info">
+      <span><b id="infoFirem">–</b> firem v datech ČOI</span>
+      <span>Kontroly do <b id="infoDo">–</b></span>
+      <span id="priklady"></span>
+    </div>
+    <div id="vysledek" aria-live="polite"></div>
+  </div>
+</div>
+
+<section class="sekce" id="cisla">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Kontroly ČOI v číslech</h2>
+    <p class="sekce-popis" id="obdobi">Kontroly firem s IČO a pravomocné pokuty, které z nich vzešly.</p>
+    <div class="cisla">
+      <div class="dlazdice tmava"><div class="velke-cislo" id="cKontrol">–</div><p>kontrol u firem</p></div>
+      <div class="dlazdice"><div class="velke-cislo" id="cPokut">–</div><p>pravomocných pokut</p></div>
+      <div class="dlazdice"><div class="velke-cislo" id="cKc">–</div><p>Kč na pokutách celkem</p></div>
+    </div>
+    <div class="zebricky">
+      <div class="dlazdice"><h3>Nejvyšší pokuty celkem</h3><ol class="zeb" id="zebKc"></ol></div>
+      <div class="dlazdice"><h3>Nejvíc pokut</h3><ol class="zeb" id="zebPocet"></ol></div>
+    </div>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <div class="poznamka">
+      <strong>Odkud data jsou:</strong> Česká obchodní inspekce, otevřená data <a href="https://coi.gov.cz/pro-spotrebitele/otevrena-data/kontroly/" target="_blank" rel="noopener">Kontroly</a> a <a href="https://coi.gov.cz/pro-spotrebitele/otevrena-data/ulozene-pokuty/" target="_blank" rel="noopener">Sankce</a>. Názvy a sídla firem jsou z registru <a href="https://ares.gov.cz/" target="_blank" rel="noopener">ARES</a>. Data jsme naposledy stáhli <strong id="aktualizace">–</strong>. ČOI je aktualizuje čtvrtletně.
+      Ukazujeme jen pravomocné pokuty. Živnostníky ČOI v otevřených datech anonymizuje, proto je tu nenajdeš. ČOI nekontroluje náhodně, ale hlavně tam, kde má podněty nebo vyšší riziko, a velké firmy s mnoha prodejnami kontroluje častěji. Co zadáš do vyhledávání, nikam neodesíláme.
+    </div>
+  </div>
+</section>
+
+<script src="{{KOREN}}data/firmy-index.js"></script>
+<script>
+(function () {
+  "use strict";
+  const IDX = window.FIRMY_INDEX;
+  const $ = (id) => document.getElementById(id);
+  if (!IDX || !Array.isArray(IDX.f)) { $("vysledek").textContent = "Data se nepodařilo načíst. Zkus stránku obnovit."; return; }
+
+  const KOREN = "{{KOREN}}";
+  const FIRMY = IDX.f; // [ico, nazev, obec, pocet kontrol, pocet pokut, Kč]
+  const PODLE_ICO = new Map(FIRMY.map((f) => [f[0], f]));
+  const PREDPISY = IDX.predpisy; // [kod, nazev]
+  const fmtCislo = (n) => n.toLocaleString("cs-CZ");
+  const fmtKc = (n) => fmtCislo(n) + " Kč";
+  const fmtDatum = (iso) => { if (!iso) return "–"; const [r, m, d] = iso.split("-"); return `${+d}. ${+m}. ${r}`; };
+  const bezDiakritiky = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const normNazev = (s) => bezDiakritiky(s).replace(/[,.\-–"„“'()&+]/g, " ").replace(/\s+/g, " ").trim();
+  const HLEDACI = FIRMY.map((f) => normNazev(f[1]));
+  const sklon = (n, a, b, c) => (n === 1 ? a : n >= 2 && n <= 4 ? b : c);
+
+  function el(tag, attrs, ...deti) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    for (const d of deti.flat()) if (d != null) e.append(d instanceof Node ? d : document.createTextNode(d));
+    return e;
+  }
+  function ikona(cesta) {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor");
+    s.setAttribute("stroke-width", "2.4"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+    s.setAttribute("aria-hidden", "true"); s.innerHTML = cesta; return s;
+  }
+  const IK_POKUTA = '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/>';
+  const IK_OK = '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 10"/>';
+  const IK_OTAZNIK = '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7"/><path d="M12 17h.01"/>';
+
+  // ---------- vyhledávání ----------
+  function platneIco(s) {
+    const c = s.replace(/\D/g, "");
+    if (!c || c.length > 8) return null;
+    const ico = c.padStart(8, "0");
+    let soucet = 0; for (let i = 0; i < 7; i++) soucet += +ico[i] * (8 - i);
+    return (11 - (soucet % 11)) % 10 === +ico[7] ? ico : null;
+  }
+  function hledej(dotaz, max = 8) {
+    const q = normNazev(dotaz);
+    if (/^\d[\d\s]*$/.test(dotaz.trim())) {
+      const c = dotaz.replace(/\D/g, "");
+      return FIRMY.filter((f) => f[0].startsWith(c.padStart(Math.min(8, c.length), "0")) || f[0].replace(/^0+/, "").startsWith(c)).slice(0, max);
+    }
+    if (q.length < 2) return [];
+    const slova = q.split(" ");
+    const vysl = [];
+    for (let i = 0; i < FIRMY.length; i++) {
+      const h = HLEDACI[i];
+      if (!slova.every((s) => h.includes(s))) continue;
+      const skore = h.startsWith(q) ? 0 : (" " + h).includes(" " + slova[0]) ? 1 : 2;
+      vysl.push([skore, i]);
+    }
+    vysl.sort((a, b) => a[0] - b[0] || FIRMY[b[1]][3] - FIRMY[a[1]][3]);
+    return vysl.slice(0, max).map((v) => FIRMY[v[1]]);
+  }
+
+  let vybrany = -1, aktualniNavrhy = [];
+  function ukazNaseptavac(navrhy, dotaz) {
+    const ul = $("naseptavac");
+    ul.innerHTML = ""; vybrany = -1; aktualniNavrhy = navrhy;
+    if (!dotaz.trim()) { ul.hidden = true; $("vstup").setAttribute("aria-expanded", "false"); return; }
+    if (!navrhy.length) {
+      ul.append(el("li", { class: "nic" }, "Žádná firma v datech ČOI. Zkus jiný tvar názvu nebo IČO."));
+    }
+    navrhy.forEach((f, i) => {
+      ul.append(el("li", {}, el("button", { type: "button", role: "option", id: "nav" + i, onmousedown: (e) => e.preventDefault(), onclick: () => vyber(f[0], true) },
+        el("span", { class: "jm" }, f[1] || "Název nedohledán"),
+        el("span", { class: "po" }, f[4] ? el("b", {}, `${f[4]} ${sklon(f[4], "pokuta", "pokuty", "pokut")}`) : "bez pokuty"),
+        el("span", { class: "dr" }, `IČO ${f[0]}${f[2] ? " · " + f[2] : ""}`))));
+    });
+    ul.hidden = false; $("vstup").setAttribute("aria-expanded", "true");
+  }
+  function zvyrazni(i) {
+    const tl = $("naseptavac").querySelectorAll("button");
+    tl.forEach((b, j) => b.setAttribute("aria-selected", String(j === i)));
+    vybrany = i;
+    if (tl[i]) { tl[i].scrollIntoView({ block: "nearest" }); $("vstup").setAttribute("aria-activedescendant", "nav" + i); }
+  }
+  $("vstup").addEventListener("input", () => {
+    const v = $("vstup").value;
+    ukazNaseptavac(hledej(v), v);
+    if (!v.trim()) { $("vysledek").innerHTML = ""; history.replaceState(null, "", location.pathname); }
+  });
+  $("vstup").addEventListener("keydown", (e) => {
+    const n = aktualniNavrhy.length;
+    if (e.key === "ArrowDown" && n) { e.preventDefault(); zvyrazni((vybrany + 1) % n); }
+    else if (e.key === "ArrowUp" && n) { e.preventDefault(); zvyrazni((vybrany - 1 + n) % n); }
+    else if (e.key === "Escape") { $("naseptavac").hidden = true; }
+  });
+  $("vstup").addEventListener("blur", () => setTimeout(() => { $("naseptavac").hidden = true; $("vstup").setAttribute("aria-expanded", "false"); }, 150));
+  $("vstup").addEventListener("focus", () => { if ($("vstup").value.trim() && !$("vysledek").childNodes.length) ukazNaseptavac(hledej($("vstup").value), $("vstup").value); });
+  $("formular").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("vstup").value.trim();
+    if (!v) return;
+    if (vybrany >= 0 && aktualniNavrhy[vybrany]) return vyber(aktualniNavrhy[vybrany][0], true);
+    const ico = /^\d[\d\s]*$/.test(v) ? platneIco(v) : null;
+    if (ico) return vyber(ico, true);
+    const navrhy = hledej(v);
+    if (navrhy.length === 1 || (navrhy.length && normNazev(navrhy[0][1]) === normNazev(v))) return vyber(navrhy[0][0], true);
+    if (/^\d[\d\s]*$/.test(v)) return ukazNenalezeno(v, "neplatne");
+    ukazNaseptavac(navrhy, v);
+  });
+
+  // ---------- detail firmy (načítá se po částech) ----------
+  const nacitane = {};
+  function nactiDil(dil) {
+    if (window.FIRMY_DILY && window.FIRMY_DILY[dil]) return Promise.resolve(window.FIRMY_DILY[dil]);
+    if (!nacitane[dil]) nacitane[dil] = new Promise((ok, chyba) => {
+      const s = document.createElement("script");
+      s.src = `${KOREN}data/firmy/${dil}.js?v=${IDX.aktualizace}`;
+      s.onload = () => ok((window.FIRMY_DILY || {})[dil] || {});
+      s.onerror = () => { delete nacitane[dil]; chyba(new Error("nenačteno")); };
+      document.head.append(s);
+    });
+    return nacitane[dil];
+  }
+
+  function hlavicka(ik, nadpis, podnadpis) {
+    return el("div", { class: "hl" }, el("div", { class: "kr" }, ikona(ik)),
+      el("div", {}, el("h2", {}, nadpis), podnadpis ? el("span", { class: "dom" }, podnadpis) : null));
+  }
+  function ukazNenalezeno(dotaz, duvod) {
+    $("naseptavac").hidden = true;
+    const cil = $("vysledek"); cil.innerHTML = "";
+    cil.append(el("div", { class: "karta n" },
+      hlavicka(IK_OTAZNIK, duvod === "neplatne" ? "Tohle IČO není platné" : "Firmu v datech ČOI nemáme", dotaz),
+      el("div", { class: "tel" },
+        el("p", {}, duvod === "neplatne"
+          ? "IČO má 8 číslic a poslední z nich je kontrolní. Zkontroluj, jestli ses nepřepsal(a)."
+          : "ČOI tuhle firmu od roku 2015 nekontrolovala, nebo jde o živnostníka, kterého ČOI v otevřených datech anonymizuje. Neznamená to, že je firma bez problémů."),
+        el("div", { class: "meta" }, el("a", { href: "https://ares.gov.cz/", target: "_blank", rel: "noopener" }, "Hledat firmu v ARES")))));
+  }
+
+  async function vyber(ico, posunout) {
+    $("naseptavac").hidden = true; $("vstup").setAttribute("aria-expanded", "false");
+    const zakl = PODLE_ICO.get(ico);
+    if (!zakl) { $("vstup").value = ico; return ukazNenalezeno(ico, "nenalezeno"); }
+    $("vstup").value = zakl[1] || ico;
+    history.replaceState(null, "", "#ico" + ico);
+    const cil = $("vysledek");
+    cil.innerHTML = ""; cil.append(el("div", { class: "nacitani" }, "Načítám detail firmy…"));
+    let f;
+    try { f = (await nactiDil(ico.slice(0, 2)))[ico]; } catch (e) { f = null; }
+    cil.innerHTML = "";
+    if (!f) { cil.append(el("div", { class: "nacitani" }, "Detail se nepodařilo načíst. Zkus to prosím znovu.")); return; }
+    cil.append(karta(ico, f));
+    if (posunout) cil.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function karta(ico, f) {
+    const pocet = f.p.length;
+    const kc = f.p.reduce((s, p) => s + p[1], 0);
+    const nazev = f.n || "Firma s IČO " + ico;
+    const pod = [`IČO ${ico}`, f.a].filter(Boolean).join(" · ");
+    const nadpis = pocet ? `ČOI jí uložila ${fmtCislo(pocet)} ${sklon(pocet, "pokutu", "pokuty", "pokut")}` : "Bez pokuty od ČOI";
+    const tel = el("div", { class: "tel" });
+
+    tel.append(el("div", { class: "souhrn" },
+      el("div", {}, el("b", {}, fmtCislo(f.k)), el("span", {}, `${sklon(f.k, "kontrola", "kontroly", "kontrol")} ČOI${f.od ? ` (${f.od.slice(0, 4) === f.do.slice(0, 4) ? f.od.slice(0, 4) : f.od.slice(0, 4) + "–" + f.do.slice(0, 4)})` : ""}${f.m > 1 ? `, ${f.m} ${sklon(f.m, "obec", "obce", "obcí")}` : ""}`)),
+      el("div", { class: pocet ? "cervena" : "" }, el("b", {}, fmtCislo(pocet)), el("span", {}, sklon(pocet, "pravomocná pokuta", "pravomocné pokuty", "pravomocných pokut"))),
+      el("div", { class: pocet ? "cervena" : "" }, el("b", {}, kc >= 1e6 ? (kc / 1e6).toLocaleString("cs-CZ", { maximumFractionDigits: 1 }) + " mil." : fmtCislo(kc)), el("span", {}, "Kč na pokutách"))));
+
+    if (pocet) {
+      tel.append(el("h3", {}, "Pokuty od nejnovější"));
+      const ul = el("ul", { class: "pokuty" });
+      const NA_STRANU = 8; let ukazano = 0;
+      const vice = el("button", { class: "vice", type: "button" });
+      const dalsi = () => {
+        f.p.slice(ukazano, ukazano + NA_STRANU).forEach(([d, castka, pr]) => {
+          ul.append(el("li", {},
+            el("span", { class: "dt" }, fmtDatum(d)),
+            el("span", { class: "pr" }, pr.map(([i, par], j) => {
+              const [kod, jm] = PREDPISY[i];
+              return el("span", { style: j ? "display:block;margin-top:6px" : null }, jm ? jm[0].toUpperCase() + jm.slice(1) : (kod || "Předpis ČOI neuvedla"),
+                el("small", {}, [jm ? kod : null, par].filter(Boolean).join(", ")));
+            })),
+            castka ? el("span", { class: "kc" }, fmtKc(castka)) : el("span", { class: "kc nula" }, "částka je součástí jiné pokuty")));
+        });
+        ukazano += NA_STRANU;
+        vice.hidden = ukazano >= pocet;
+        vice.textContent = `Zobrazit další (${fmtCislo(Math.max(0, pocet - ukazano))})`;
+      };
+      vice.addEventListener("click", dalsi);
+      dalsi();
+      tel.append(ul, vice);
+    } else {
+      tel.append(el("p", {}, `ČOI firmu ${f.k === 1 ? "jednou kontrolovala" : fmtCislo(f.k) + "× kontrolovala"} a žádnou pravomocnou pokutu jí neuložila. To je dobrá zpráva, ale ne záruka: kontrola ověřuje jen to, na co se zrovna zaměřila.`));
+    }
+    if (!f.n) tel.append(el("p", { class: "vysvetlivka" }, "Název firmy se v registru ARES nepodařilo dohledat. Nejčastěji to znamená, že firma už zanikla. Údaje o kontrolách a pokutách jsou od ČOI."));
+    if (f.z) tel.append(el("p", { class: "vysvetlivka" }, `Podle ARES firma zanikla ${fmtDatum(f.z)}.`));
+    if (pocet && f.k >= 20) tel.append(el("p", { class: "vysvetlivka" }, "Velké firmy s mnoha prodejnami ČOI kontroluje často, takže mají víc kontrol i pokut. Dívej se i na výši pokut a za co byly."));
+    tel.append(el("div", { class: "meta" },
+      el("a", { href: "https://ares.gov.cz/ekonomicke-subjekty?ico=" + ico, target: "_blank", rel: "noopener" }, "Firma v ARES"),
+      el("a", { href: KOREN + "nastroje/over-eshop/index.html" }, "Ověř i e-shop"),
+      el("span", {}, "Data ČOI k " + fmtDatum(IDX.obdobi_do))));
+    return el("div", { class: "karta " + (pocet ? "v" : "o") },
+      el("div", { class: "hl" }, el("div", { class: "kr" }, ikona(pocet ? IK_POKUTA : IK_OK)),
+        el("div", {}, el("h2", {}, nazev), el("span", { class: "dom" }, nadpis), el("span", { class: "dom" }, pod))), tel);
+  }
+
+  // ---------- čísla a žebříčky ----------
+  const P = IDX.pocty;
+  $("infoFirem").textContent = fmtCislo(P.firem);
+  $("infoDo").textContent = fmtDatum(IDX.obdobi_do);
+  $("cKontrol").textContent = fmtCislo(P.kontrol);
+  $("cPokut").textContent = fmtCislo(P.pokut);
+  $("cKc").textContent = (P.kc / 1e6).toLocaleString("cs-CZ", { maximumFractionDigits: 0 }) + " mil.";
+  $("obdobi").textContent = `Kontroly firem s IČO od ${fmtDatum(IDX.obdobi_od)} do ${fmtDatum(IDX.obdobi_do)} a pravomocné pokuty, které z nich vzešly. Klikni na firmu a uvidíš detail.`;
+  $("aktualizace").textContent = fmtDatum(IDX.aktualizace);
+  function zebricek(cilId, klic, popis) {
+    FIRMY.filter((f) => f[1]).sort((a, b) => b[klic] - a[klic]).slice(0, 10).forEach((f) => {
+      $(cilId).append(el("li", {}, el("button", { type: "button", onclick: () => { vyber(f[0], false); $("vstup").scrollIntoView({ behavior: "smooth", block: "center" }); } },
+        el("span", { class: "jm" }, f[1] || "IČO " + f[0]), el("span", { class: "n" }, popis(f[klic])))));
+    });
+  }
+  zebricek("zebKc", 5, (n) => n >= 1e6 ? (n / 1e6).toLocaleString("cs-CZ", { maximumFractionDigits: 1 }) + " mil. Kč" : fmtKc(n));
+  zebricek("zebPocet", 4, (n) => fmtCislo(n) + "×");
+
+  const uk = [...FIRMY].filter((f) => f[1] && f[4] >= 3).sort((a, b) => b[3] - a[3])[0];
+  if (uk) $("priklady").append("Vyzkoušej: ", el("button", { type: "button", onclick: () => vyber(uk[0], true) }, uk[1]));
+
+  function zHashe() {
+    const m = location.hash.match(/^#ico(\d{8})$/);
+    if (m) vyber(m[1], false);
+  }
+  window.addEventListener("hashchange", zHashe);
+  zHashe();
+})();
+</script>

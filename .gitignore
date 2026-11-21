@@ -1,0 +1,8 @@
+# Předloha souboru .gitignore pro repozitář na GitHubu.
+# Hotový web a data se generují automaticky, do repozitáře se ukládá jen historie a stav aktualizací.
+# (obrázky ve web/img se negenerují, ty se do repozitáře ukládají)
+web/*
+!web/img/
+k-overeni.md
+beh_skriptu.log
+.claude/

@@ -1,0 +1,102 @@
+# Automatická aktualizace dat a zveřejnění webu „jsem spotřebitel“ (GitHub Actions).
+#
+# Tento soubor patří do repozitáře na GitHubu jako .github/workflows/aktualizace.yml.
+# V téhle složce je jen jeho předloha (složka se synchronizuje přes Google Drive, git sem nepatří).
+#
+# Co dělá každý den ráno:
+#   1. vezme data z minulého běhu (mezipaměť GitHubu),
+#   2. spustí aktualizuj_vse.py – ten stáhne zdroje, které jsou na řadě, zkontroluje je
+#      a při problému ponechá poslední dobrá data,
+#   3. zveřejní hotový web na GitHub Pages,
+#   4. když něco selhalo, GitHub pošle e-mail; když je potřeba ověřit adresu benzinky, založí úkol (Issue).
+
+name: Aktualizace dat a zveřejnění webu
+
+on:
+  schedule:
+    - cron: "15 4 * * *"        # denně ve 4:15 UTC = 5:15 v zimě / 6:15 v létě českého času
+  workflow_dispatch:             # ruční spuštění tlačítkem „Run workflow“
+    inputs:
+      vse:
+        description: "Stáhnout všechny zdroje bez ohledu na kalendář"
+        type: boolean
+        default: false
+  push:
+    branches: [main]             # po změně skriptů nebo textů se web hned postaví znovu
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: write
+
+concurrency:
+  group: aktualizace
+  cancel-in-progress: false
+
+jobs:
+  aktualizace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    environment:
+      name: github-pages
+      url: ${{ steps.zverejneni.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Data z minulého běhu
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            web/data
+            /tmp/jsem-spotrebitel-*
+          key: data-${{ github.run_id }}
+          restore-keys: data-
+
+      - name: Aktualizace dat
+        id: akt
+        run: |
+          if [ "${{ inputs.vse }}" = "true" ]; then uv run aktualizuj_vse.py --vse; else uv run aktualizuj_vse.py; fi
+
+      - name: Uložit data pro příští běh
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            web/data
+            /tmp/jsem-spotrebitel-*
+          key: data-${{ github.run_id }}
+
+      - name: Uložit historii do repozitáře
+        if: always()
+        run: |
+          git config user.name "aktualizace-dat"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f web/data/historie-rizikovych-webu.json web/data/stav-aktualizace.json || true
+          git diff --staged --quiet || (git commit -m "Aktualizace historie a stavu dat" && git push)
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Zveřejnění webu
+        id: zverejneni
+        uses: actions/deploy-pages@v4
+
+      - name: Úkol k ověření adres benzinek
+        if: steps.akt.outputs.k_overeni != '0' && steps.akt.outputs.k_overeni != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAZEV="Ověřit adresy nových benzinek"
+          CISLO=$(gh issue list --state open --search "$NAZEV in:title" --json number --jq '.[0].number')
+          if [ -n "$CISLO" ]; then gh issue comment "$CISLO" --body-file k-overeni.md
+          else gh issue create --title "$NAZEV" --body-file k-overeni.md; fi
+
+      - name: Upozornění na problém (GitHub pošle e-mail)
+        if: steps.akt.outputs.problemy != '0'
+        run: |
+          echo "Některý zdroj se nepodařilo aktualizovat – podrobnosti v souhrnu běhu. Na webu zůstala předchozí data."
+          exit 1

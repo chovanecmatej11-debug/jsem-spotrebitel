@@ -1,0 +1,225 @@
+---
+nazev: Benzinky s pokutou za palivo
+nadpis: Natankoval jsi <em>poctivě?</em>
+popis: Čerpací stanice, kterým Česká obchodní inspekce pravomocně uložila pokutu za nekvalitní palivo. Hledej podle obce, ulice nebo provozovatele.
+kratky_popis: Kde ČOI našla nekvalitní benzín, naftu nebo LPG.
+na_uvod: ano
+poradi: 3
+hero_prekryv: ano
+---
+<style>
+  .stred { max-width: 900px; margin: -86px auto 0; position: relative; z-index: 3; }
+  .hledani { display: flex; gap: 10px; background: var(--bila); border-radius: 20px; padding: 10px; box-shadow: 0 20px 50px rgba(20,40,115,.25); border: 2px solid transparent; transition: border-color .15s; }
+  .hledani:focus-within { border-color: var(--koral); }
+  .hledani input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 20px; padding: 14px; color: var(--text); }
+  .info { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 16px 4px 0; font-size: 14px; color: var(--tlum); }
+  .info b { color: var(--kobalt); font-size: 15.5px; }
+  .filtry { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
+  .filtr { font-size: 14px; border: 1.5px solid var(--okraj); background: var(--bila); color: var(--text); border-radius: 999px; padding: 6px 13px; font-family: inherit; }
+  .filtr[aria-pressed="true"] { background: var(--kobalt); border-color: var(--kobalt); color: var(--krem); }
+  .filtr .n { opacity: .7; margin-left: 4px; }
+  .aktivni-zavada { display: inline-flex; gap: 8px; align-items: center; margin: 8px 0 0; font-size: 14px; background: var(--karmin-svetly); color: var(--karmin2); border-radius: 999px; padding: 5px 6px 5px 12px; }
+  .aktivni-zavada button { border: 0; background: var(--bila); color: var(--karmin2); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 13px; }
+  .pocet-vysledku { font-size: 14px; color: var(--tlum); margin: 14px 2px 10px; }
+  ul.pumpy { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  ul.pumpy li { background: var(--bila); border-radius: 18px; box-shadow: var(--stin); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .p-hlava { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .p-obec { font-family: var(--f-nadpis); font-size: 21px; line-height: 1.15; color: var(--kobalt); overflow-wrap: anywhere; }
+  .p-kc { font-weight: 700; color: var(--karmin); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .p-adresa { font-size: 15px; overflow-wrap: anywhere; }
+  .p-adresa small { display: block; color: var(--tlum); font-size: 13.5px; }
+  .p-zavada { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .stitek { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--krem); color: var(--text); }
+  .stitek.palivo { background: var(--kobalt); color: var(--krem); font-weight: 600; }
+  .stitek.zav { background: var(--karmin-svetly); color: var(--karmin2); }
+  .p-pata { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; font-size: 13.5px; color: var(--tlum); border-top: 1px solid var(--okraj); padding-top: 9px; margin-top: auto; }
+  .p-pata a { font-weight: 600; }
+  .vice { display: block; margin: 18px auto 0; font-weight: 600; background: var(--bila); color: var(--kobalt); border: 2px solid var(--kobalt); padding: 10px 22px; border-radius: 12px; font-family: inherit; font-size: 15px; }
+  .vice:hover { background: var(--nebe2); }
+  .prazdno { background: var(--bila); border-radius: 18px; padding: 20px; color: var(--tlum); grid-column: 1 / -1; }
+  .cisla { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+  .dlazdice { background: var(--bila); border-radius: 20px; padding: 22px; box-shadow: var(--stin); }
+  .dlazdice.tmava { background: var(--kobalt); color: var(--krem); position: relative; overflow: hidden; }
+  .dlazdice.tmava::after { content: ""; position: absolute; right: -50px; bottom: -50px; width: 140px; height: 140px; border-radius: 50%; background: var(--koral); }
+  .velke-cislo { font-family: var(--f-nadpis); font-weight: 900; font-size: clamp(52px, 8vw, 78px); line-height: 1; color: var(--krem); position: relative; z-index: 1; }
+  .dlazdice.tmava p { margin: 10px 0 0; color: var(--nebe); position: relative; z-index: 1; max-width: 220px; }
+  .dlazdice.tmava p b { color: var(--krem); }
+  .pruhy { display: grid; gap: 10px; }
+  .pruh { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; align-items: center; font-size: 15px; background: none; border: 0; padding: 4px 0; text-align: left; color: inherit; border-radius: 8px; font-family: inherit; }
+  .pruh .stopa { grid-column: 1 / -1; height: 12px; background: var(--krem2); border-radius: 999px; overflow: hidden; }
+  .pruh .vypln { display: block; height: 100%; background: var(--kobalt); border-radius: 999px; min-width: 6px; }
+  .pruh:hover .vypln, .pruh:focus-visible .vypln { background: var(--koral); }
+  .pruh .n { font-variant-numeric: tabular-nums; color: var(--tlum); font-weight: 600; }
+  dl.slovnik { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  dl.slovnik div { background: var(--bila); border-radius: 16px; padding: 14px 16px; border: 1px solid var(--okraj); }
+  dl.slovnik dt { font-weight: 700; color: var(--kobalt); margin-bottom: 4px; }
+  dl.slovnik dd { margin: 0; font-size: 15px; }
+  @media (max-width: 760px) {
+    .stred { margin-top: -78px; }
+    .hledani { padding: 8px; }
+    .hledani input { font-size: 18px; padding: 12px; }
+    ul.pumpy, .cisla, dl.slovnik { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="obal">
+  <div class="stred">
+    <div class="hledani">
+      <label for="vstup" class="sr">Obec, ulice nebo provozovatel</label>
+      <input id="vstup" type="search" placeholder="Obec, ulice nebo provozovatel" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="info">
+      <span><b id="infoPocet">–</b> pravomocných pokut od roku 2021</span>
+      <span>Staženo z ČOI <b id="infoDatum">–</b></span>
+    </div>
+  </div>
+</div>
+
+<section class="sekce" id="seznam" style="padding-top:20px">
+  <div class="obal">
+    <div class="filtry" id="filtry" role="group" aria-label="Druh paliva"></div>
+    <div id="aktivniZavada"></div>
+    <p class="pocet-vysledku" id="pocetVysledku" aria-live="polite"></p>
+    <ul class="pumpy" id="pumpy"></ul>
+    <button class="vice" id="vice" type="button" hidden>Zobrazit další</button>
+  </div>
+</section>
+
+<section class="sekce" id="cisla">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Co bylo s palivem špatně</h2>
+    <p class="sekce-popis">Ukazatel jakosti, ve kterém palivo podle rozhodnutí ČOI nevyhovělo normě. Klikni a zobrazí se odpovídající stanice.</p>
+    <div class="cisla">
+      <div class="dlazdice tmava">
+        <div class="velke-cislo" id="celkemKc">–</div>
+        <p>na pokutách za nekvalitní palivo, <b id="celkemPocet">–</b> rozhodnutí</p>
+      </div>
+      <div class="dlazdice"><div class="pruhy" id="pruhy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Co ty závady znamenají</h2>
+    <p class="sekce-popis">Zjednodušené vysvětlení. Přesné hodnoty a normy najdeš v rozhodnutí ČOI u každé stanice.</p>
+    <dl class="slovnik">
+      <div><dt>Příliš nízký bod vzplanutí</dt><dd>Nafta se vznítí při nižší teplotě, než dovoluje norma. Často to ukazuje na příměs lehčího paliva, třeba benzínu.</dd></div>
+      <div><dt>Nesprávný obsah ethanolu</dt><dd>Benzín obsahoval víc ethanolu, než odpovídá jeho označení. Třeba benzín prodávaný jako E5 měl ethanolu jako E10.</dd></div>
+      <div><dt>Příliš mnoho síry</dt><dd>Palivo (nejčastěji LPG) obsahovalo víc síry, než norma připouští.</dd></div>
+      <div><dt>Nevyhovující oxidační stabilita</dt><dd>Nafta rychleji stárne a může tvořit usazeniny.</dd></div>
+      <div><dt>Nevyhovující tlak par</dt><dd>Benzín se odpařuje víc nebo míň, než má. Často jde o letní a zimní benzín prodávaný v nesprávném období.</dd></div>
+      <div><dt>Nevyhovující destilace</dt><dd>Benzín se při laboratorní zkoušce odpařoval jinak, než předepisuje norma.</dd></div>
+      <div><dt>Další</dt><dd>Nízké oktanové číslo, příliš mnoho vody, nesprávný podíl bionafty (MEMK) nebo nafta nevhodná do mrazu.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <div class="poznamka">
+      <strong>Odkud data jsou:</strong> Česká obchodní inspekce, <a href="https://coi.gov.cz/pro-spotrebitele/otevrena-data/sankce-za-nejakostni-paliva/" target="_blank" rel="noopener">otevřená data – Sankce za nejakostní paliva</a>. Data jsme naposledy stáhli <strong id="aktualizace">–</strong>. ČOI je aktualizuje denně. Adresy stanic a popis závady jsme převzali z textu rozhodnutí ČOI, které najdeš u každé stanice.
+      Pokuta se týká paliva prodávaného v den kontroly. Neznamená, že stanice prodává nekvalitní palivo i dnes, a stanice mezitím mohla změnit provozovatele. Podnikající fyzické osoby nejmenujeme, jméno je uvedeno v rozhodnutí ČOI.
+    </div>
+  </div>
+</section>
+
+<script src="{{KOREN}}data/benzinky.js"></script>
+<script>
+(function () {
+  "use strict";
+  const DATA = window.BENZINKY;
+  const $ = (id) => document.getElementById(id);
+  if (!DATA || !Array.isArray(DATA.pokuty)) { $("pocetVysledku").textContent = "Data se nepodařilo načíst. Zkus stránku obnovit."; return; }
+
+  const KOREN = "{{KOREN}}";
+  const P = DATA.pokuty;
+  const Z = DATA.zavady;
+  const fmtCislo = (n) => n.toLocaleString("cs-CZ");
+  const fmtKc = (n) => fmtCislo(n) + " Kč";
+  const fmtDatum = (iso) => { if (!iso) return "–"; const [r, m, d] = iso.split("-"); return `${+d}. ${+m}. ${r}`; };
+  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const skupina = (pal) => (/^Benzín/.test(pal) ? "Benzín" : pal);
+  P.forEach((p) => { p._h = norm([p.ob, p.ad, p.st, p.pr, p.ico, p.pal.join(" ")].join(" ")); p._s = [...new Set(p.pal.map(skupina))]; });
+
+  function el(tag, attrs, ...deti) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    for (const d of deti.flat()) if (d != null) e.append(d instanceof Node ? d : document.createTextNode(d));
+    return e;
+  }
+
+  // ---------- souhrn ----------
+  const celkem = P.reduce((s, p) => s + p.kc, 0);
+  $("infoPocet").textContent = fmtCislo(P.length);
+  $("infoDatum").textContent = fmtDatum(DATA.aktualizace);
+  $("aktualizace").textContent = fmtDatum(DATA.aktualizace);
+  $("celkemKc").textContent = (celkem / 1e6).toLocaleString("cs-CZ", { maximumFractionDigits: 1 }) + " mil.";
+  $("celkemPocet").textContent = fmtCislo(P.length);
+
+  // ---------- filtry ----------
+  let palivo = "vse", zavada = null, strana = 1;
+  const NA_STRANU = 12;
+  const pocty = {};
+  P.forEach((p) => p._s.forEach((s) => { pocty[s] = (pocty[s] || 0) + 1; }));
+  const poradiPaliv = ["Nafta", "Benzín", "LPG", "E85", "CNG"].filter((s) => pocty[s]);
+  [["vse", "Vše", P.length], ...poradiPaliv.map((s) => [s, s, pocty[s]])].forEach(([k, nazev, n]) => {
+    const b = el("button", { class: "filtr", type: "button", "aria-pressed": String(k === "vse"), onclick: () => { palivo = k; strana = 1; obnovFiltry(); vykresli(); } },
+      nazev, el("span", { class: "n" }, fmtCislo(n)));
+    b.dataset.k = k; $("filtry").append(b);
+  });
+  function obnovFiltry() {
+    document.querySelectorAll(".filtr").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === palivo)));
+    const box = $("aktivniZavada"); box.innerHTML = "";
+    if (zavada) box.append(el("span", { class: "aktivni-zavada" }, "Závada: " + Z[zavada],
+      el("button", { type: "button", onclick: () => { zavada = null; strana = 1; obnovFiltry(); vykresli(); } }, "zrušit ✕")));
+  }
+
+  const pz = {};
+  P.forEach((p) => { if (p.za) pz[p.za] = (pz[p.za] || 0) + 1; });
+  const zPoradi = Object.keys(pz).sort((a, b) => pz[b] - pz[a]);
+  const maxZ = Math.max(...Object.values(pz));
+  zPoradi.forEach((k) => {
+    $("pruhy").append(el("button", { class: "pruh", type: "button", onclick: () => { zavada = k; palivo = "vse"; strana = 1; obnovFiltry(); vykresli(); $("seznam").scrollIntoView({ behavior: "smooth" }); } },
+      el("span", {}, Z[k]), el("span", { class: "n" }, fmtCislo(pz[k])),
+      el("span", { class: "stopa" }, el("span", { class: "vypln", style: `width:${(pz[k] / maxZ) * 100}%` }))));
+  });
+
+  // ---------- seznam ----------
+  function karta(p) {
+    return el("li", {},
+      el("div", { class: "p-hlava" }, el("span", { class: "p-obec" }, p.ob || "Adresa v rozhodnutí"), el("span", { class: "p-kc" }, fmtKc(p.kc))),
+      el("div", { class: "p-adresa" }, p.st ? p.st : null, el("small", {}, p.ad || "Adresu stanice najdeš v rozhodnutí ČOI.")),
+      el("div", { class: "p-zavada" },
+        p.pal.map((x) => el("span", { class: "stitek palivo" }, x)),
+        p.za ? el("span", { class: "stitek zav" }, Z[p.za]) : null),
+      el("div", { class: "p-adresa" }, el("small", {}, "Provozovatel: ",
+        p.fi ? el("a", { href: `${KOREN}nastroje/proverit-firmu/index.html#ico${p.ico}` }, p.pr) : p.pr)),
+      el("div", { class: "p-pata" },
+        el("span", {}, "Pravomocné " + fmtDatum(p.pm) + (p.od ? " · potvrzeno po odvolání" : "")),
+        el("a", { href: p.url, target: "_blank", rel: "noopener" }, "Rozhodnutí ČOI (PDF)")));
+  }
+  function vykresli() {
+    const q = norm($("vstup").value.trim());
+    const slova = q.split(/\s+/).filter(Boolean);
+    const vyber = P.filter((p) => (palivo === "vse" || p._s.includes(palivo)) && (!zavada || p.za === zavada) && slova.every((s) => p._h.includes(s)));
+    const ul = $("pumpy"); ul.innerHTML = "";
+    vyber.slice(0, strana * NA_STRANU).forEach((p) => ul.append(karta(p)));
+    if (!vyber.length) ul.append(el("li", { class: "prazdno" },
+      q ? `Pro „${$("vstup").value.trim()}“ jsme žádnou pokutovanou stanici nenašli. To je dobrá zpráva, ale ČOI kontroluje jen část stanic.` : "Nic nenalezeno."));
+    const kc = vyber.reduce((s, p) => s + p.kc, 0);
+    $("pocetVysledku").textContent = vyber.length
+      ? `${fmtCislo(vyber.length)} ${vyber.length === 1 ? "pokuta" : vyber.length < 5 ? "pokuty" : "pokut"} za ${fmtKc(kc)}, od nejnovější`
+      : "";
+    $("vice").hidden = vyber.length <= strana * NA_STRANU;
+    $("vice").textContent = `Zobrazit další (${fmtCislo(Math.max(0, vyber.length - strana * NA_STRANU))})`;
+  }
+  $("vstup").addEventListener("input", () => { strana = 1; vykresli(); });
+  $("vice").addEventListener("click", () => { strana++; vykresli(); });
+  vykresli();
+})();
+</script>

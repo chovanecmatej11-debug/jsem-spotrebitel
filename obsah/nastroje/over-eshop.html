@@ -1,0 +1,311 @@
+---
+nazev: Ověř e-shop
+nadpis: Než zaplatíš, <em>ověř si ho.</em>
+popis: Porovnáme e-shop se seznamem rizikových webů České obchodní inspekce. Hned a zdarma.
+kratky_popis: Zjisti, jestli je e-shop na seznamu rizikových webů ČOI.
+na_uvod: ano
+poradi: 1
+hero_prekryv: ano
+---
+<style>
+  .stred { max-width: 900px; margin: -86px auto 0; position: relative; z-index: 3; }
+  form.hledani { display: flex; gap: 10px; background: var(--bila); border-radius: 20px; padding: 10px; box-shadow: 0 20px 50px rgba(20,40,115,.25); border: 2px solid transparent; transition: border-color .15s; }
+  form.hledani:focus-within { border-color: var(--koral); }
+  form.hledani input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 20px; padding: 14px; color: var(--text); }
+  form.hledani button { border: 0; background: var(--karmin); color: var(--bila); font-weight: 700; font-size: 18px; padding: 0 32px; border-radius: 14px; }
+  form.hledani button:hover { background: var(--karmin2); }
+  .info { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 16px 4px 0; font-size: 14px; color: var(--tlum); }
+  .info b { color: var(--kobalt); font-size: 15.5px; }
+  .info button { background: none; border: 0; padding: 0; color: var(--kobalt); text-decoration: underline; font-weight: 600; }
+  #vysledek { margin-top: 24px; }
+  #vysledek:empty { display: none; }
+  .karta { border-radius: 20px; overflow: hidden; background: var(--bila); box-shadow: var(--stin); animation: vjezd .25s ease-out; }
+  @keyframes vjezd { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .karta .hl { padding: 18px 22px; display: flex; gap: 14px; align-items: center; }
+  .karta .kr { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .karta .kr svg { width: 25px; height: 25px; }
+  .karta .hl h2 { margin: 0; font-family: var(--f-nadpis); font-size: clamp(21px, 3.6vw, 26px); line-height: 1.15; }
+  .karta .hl .dom { display: block; font-weight: 600; font-size: 15.5px; opacity: .92; word-break: break-all; margin-top: 2px; }
+  .karta .tel { padding: 18px 22px 22px; }
+  .karta.v .hl { background: var(--karmin); color: var(--bila); }
+  .karta.v .kr { background: var(--bila); color: var(--karmin); }
+  .karta.o .hl { background: var(--nebe2); color: var(--kobalt); }
+  .karta.o .kr { background: var(--kobalt); color: var(--bila); }
+  .karta.n .hl { background: var(--krem2); color: var(--text); }
+  .karta.n .kr { background: var(--bila); color: var(--tlum); }
+  blockquote.citace { margin: 0; font-family: var(--f-nadpis); font-size: clamp(17px, 2.4vw, 19.5px); line-height: 1.45; color: var(--kobalt); border-left: 4px solid var(--koral); padding-left: 16px; }
+  .zdroj { margin-top: 10px; font-size: 13.5px; color: var(--tlum); }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .meta span { background: var(--krem); color: var(--text); font-size: 13.5px; padding: 4px 11px; border-radius: 999px; }
+  .tel p { margin: 0 0 14px; }
+  ol.chk { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 18px; margin: 0; padding: 0; list-style: none; counter-reset: c; }
+  ol.chk li { counter-increment: c; display: flex; gap: 10px; align-items: flex-start; font-size: 15.5px; }
+  ol.chk li::before { content: counter(c); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--kobalt); color: var(--bila); display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px; }
+  .podobne { background: var(--karmin-svetly); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  .podobne h3 { font-size: 15px; margin: 0 0 8px; color: var(--karmin2); }
+  .podobne div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip-odkaz { font-size: 14px; border: 1.5px solid var(--karmin); color: var(--karmin); background: var(--bila); border-radius: 999px; padding: 5px 12px; }
+  .chip-odkaz:hover { background: var(--karmin-svetly); }
+  .cisla { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+  .dlazdice { background: var(--bila); border-radius: 20px; padding: 22px; box-shadow: var(--stin); }
+  .dlazdice.tmava { background: var(--kobalt); color: var(--krem); position: relative; overflow: hidden; }
+  .dlazdice.tmava::after { content: ""; position: absolute; right: -50px; bottom: -50px; width: 140px; height: 140px; border-radius: 50%; background: var(--koral); }
+  .velke-cislo { font-family: var(--f-nadpis); font-weight: 900; font-size: clamp(56px, 9vw, 84px); line-height: 1; color: var(--krem); position: relative; z-index: 1; }
+  .dlazdice.tmava p { margin: 10px 0 0; color: var(--nebe); position: relative; z-index: 1; max-width: 200px; }
+  .pruhy { display: grid; gap: 10px; }
+  .pruh { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; align-items: center; font-size: 15px; background: none; border: 0; padding: 4px 0; text-align: left; color: inherit; border-radius: 8px; }
+  .pruh .stopa { grid-column: 1 / -1; height: 12px; background: var(--krem2); border-radius: 999px; overflow: hidden; }
+  .pruh .vypln { display: block; height: 100%; background: var(--kobalt); border-radius: 999px; min-width: 6px; }
+  .pruh:hover .vypln, .pruh:focus-visible .vypln { background: var(--koral); }
+  .pruh .n { font-variant-numeric: tabular-nums; color: var(--tlum); font-weight: 600; }
+  .filtry { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .filtr { font-size: 14px; border: 1.5px solid var(--okraj); background: var(--bila); color: var(--text); border-radius: 999px; padding: 6px 13px; }
+  .filtr[aria-pressed="true"] { background: var(--kobalt); border-color: var(--kobalt); color: var(--krem); }
+  .filtr .n { opacity: .7; margin-left: 4px; }
+  .hledat-v-seznamu { width: 100%; font: inherit; padding: 13px 15px; border-radius: 14px; border: 1.5px solid var(--okraj); background: var(--bila); margin-bottom: 14px; }
+  .hledat-v-seznamu:focus { outline: none; border-color: var(--kobalt); }
+  .pocet-vysledku { font-size: 14px; color: var(--tlum); margin: 0 0 10px; }
+  ul.weby { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  ul.weby li { background: var(--bila); border-radius: 14px; border: 1px solid var(--okraj); }
+  ul.weby summary { list-style: none; cursor: pointer; padding: 13px 15px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  ul.weby summary::-webkit-details-marker { display: none; }
+  ul.weby .d { font-weight: 600; word-break: break-all; }
+  ul.weby .k { font-size: 12.5px; color: var(--tlum); white-space: nowrap; }
+  ul.weby details[open] summary { border-bottom: 1px solid var(--okraj); }
+  ul.weby .duvod { padding: 12px 15px; font-size: 15px; }
+  ul.weby .duvod small { display: block; color: var(--tlum); margin-top: 6px; }
+  .nove { background: var(--koral); color: var(--bila); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; }
+  .vice { display: block; margin: 18px auto 0; font-weight: 600; background: var(--bila); color: var(--kobalt); border: 2px solid var(--kobalt); padding: 10px 22px; border-radius: 12px; }
+  .vice:hover { background: var(--nebe2); }
+  @media (max-width: 760px) {
+    .stred { margin-top: -78px; }
+    form.hledani { flex-direction: column; padding: 8px; }
+    form.hledani input { font-size: 18px; padding: 12px; }
+    form.hledani button { padding: 14px; }
+    ol.chk { grid-template-columns: 1fr; }
+    .karta .hl, .karta .tel { padding-left: 16px; padding-right: 16px; }
+    .karta .kr { width: 42px; height: 42px; }
+    .cisla { grid-template-columns: 1fr; }
+    ul.weby { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="obal">
+  <div class="stred">
+    <form class="hledani" id="formular" autocomplete="off">
+      <label for="vstup" class="sr">Adresa e-shopu</label>
+      <input id="vstup" type="text" inputmode="url" placeholder="např. obchod.cz nebo vlož odkaz" spellcheck="false" autocapitalize="off">
+      <button type="submit">Ověřit</button>
+    </form>
+    <div class="info">
+      <span><b id="infoPocet">–</b> rizikových webů</span>
+      <span>Data ČOI k <b id="infoDatum">–</b></span>
+      <span id="priklady"></span>
+    </div>
+    <div id="vysledek" aria-live="polite"></div>
+  </div>
+</div>
+
+<section class="sekce" id="cisla">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Seznam ČOI v číslech</h2>
+    <p class="sekce-popis">Proč inspekce weby na seznam zařazuje. Klikni na důvod a zobrazí se ti odpovídající weby.</p>
+    <div class="cisla">
+      <div class="dlazdice tmava">
+        <div class="velke-cislo" id="celkem">–</div>
+        <p>rizikových webů je teď na seznamu ČOI</p>
+      </div>
+      <div class="dlazdice"><div class="pruhy" id="pruhy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sekce" id="seznam">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Celý seznam</h2>
+    <p class="sekce-popis">U každého webu je důvod přesně tak, jak ho uvádí ČOI.</p>
+    <div class="filtry" id="filtry"></div>
+    <label for="filtrText" class="sr">Hledat v seznamu</label>
+    <input class="hledat-v-seznamu" id="filtrText" type="search" placeholder="Hledat v seznamu (část názvu, třeba „lekarna“)" spellcheck="false">
+    <p class="pocet-vysledku" id="pocetVysledku"></p>
+    <ul class="weby" id="weby"></ul>
+    <button class="vice" id="vice" type="button" hidden>Zobrazit další</button>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <div class="poznamka">
+      <strong>Odkud data jsou:</strong> Česká obchodní inspekce, <a href="https://www.coi.gov.cz/pro-spotrebitele/otevrena-data/rizikove-weby/" target="_blank" rel="noopener">otevřená data – Rizikové weby</a>. Data jsme naposledy stáhli <strong id="aktualizace">–</strong>. ČOI seznam aktualizuje denně a web z něj může vyřadit, jakmile provozovatel nedostatky odstraní. Co zadáš do vyhledávání, nikam neodesíláme. Vše se vyhodnotí přímo ve tvém prohlížeči.
+    </div>
+  </div>
+</section>
+
+<script src="{{KOREN}}data/rizikove-weby.js"></script>
+<script>
+(function () {
+  "use strict";
+  const DATA = window.RIZIKOVE_WEBY;
+  const $ = (id) => document.getElementById(id);
+  if (!DATA || !Array.isArray(DATA.weby)) { $("vysledek").textContent = "Data se nepodařilo načíst. Zkus stránku obnovit."; return; }
+
+  const WEBY = DATA.weby;
+  const PODLE_DOMENY = new Map(WEBY.map((w) => [w.d, w]));
+  const KAT = DATA.kategorie;
+  const fmtDatum = (iso) => new Date(iso).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" });
+  const fmtCislo = (n) => n.toLocaleString("cs-CZ");
+
+  function el(tag, attrs, ...deti) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    for (const d of deti.flat()) if (d != null) e.append(d instanceof Node ? d : document.createTextNode(d));
+    return e;
+  }
+  function ikona(cesta) {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor");
+    s.setAttribute("stroke-width", "2.4"); s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+    s.setAttribute("aria-hidden", "true"); s.innerHTML = cesta; return s;
+  }
+  const IK_VYSTRAHA = '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/>';
+  const IK_LUPA = '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>';
+  const IK_OTAZNIK = '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7"/><path d="M12 17h.01"/>';
+
+  function naDomenu(vstup) {
+    let s = (vstup || "").trim().toLowerCase();
+    if (!s) return "";
+    s = s.replace(/^[a-z]+:\/\//, "").split(/[\/?#\s]/)[0];
+    s = s.replace(/^www\./, "").replace(/\.$/, "").replace(/:\d+$/, "");
+    try { s = new URL("https://" + s).hostname.replace(/^www\./, ""); } catch (e) {}
+    return s;
+  }
+  const jadro = (d) => d.replace(/\.[^.]+$/, "").replace(/[^a-z0-9]/g, "");
+  function najdi(domena) {
+    const casti = domena.split(".");
+    for (let i = 0; i < casti.length - 1; i++) {
+      const kandidat = casti.slice(i).join(".");
+      if (PODLE_DOMENY.has(kandidat)) return { zaznam: PODLE_DOMENY.get(kandidat), pres: kandidat !== domena ? kandidat : null };
+    }
+    return null;
+  }
+  function podobne(domena, max = 6) {
+    const j = jadro(domena.includes(".") ? domena : domena + ".x");
+    if (j.length < 4) return [];
+    return WEBY.filter((w) => w.d !== domena && (jadro(w.d) === j || (j.length >= 5 && jadro(w.d).includes(j)))).slice(0, max);
+  }
+  function hlavicka(ik, nadpis, domena) {
+    return el("div", { class: "hl" }, el("div", { class: "kr" }, ikona(ik)),
+      el("div", {}, el("h2", {}, nadpis), domena ? el("span", { class: "dom" }, domena) : null));
+  }
+  function blokPodobnych(seznam, nadpis) {
+    return el("div", { class: "podobne" }, el("h3", {}, nadpis),
+      el("div", {}, seznam.map((w) => el("button", { class: "chip-odkaz", type: "button", onclick: () => { $("vstup").value = w.d; vyhodnot(w.d, false); } }, w.d))));
+  }
+
+  function vyhodnot(vstup, posunout) {
+    const domena = naDomenu(vstup);
+    const cil = $("vysledek");
+    cil.innerHTML = "";
+    if (!domena) return;
+    history.replaceState(null, "", "#overit=" + encodeURIComponent(domena));
+    let karta;
+    if (!domena.includes(".")) {
+      const pod = podobne(domena, 12);
+      karta = el("div", { class: "karta n" }, hlavicka(IK_OTAZNIK, "Zadej celou adresu", null),
+        el("div", { class: "tel" },
+          el("p", {}, "Např. ", el("b", {}, domena + ".cz"), ". Podle samotného názvu nejde web spolehlivě ověřit."),
+          pod.length ? blokPodobnych(pod, "Na seznamu ČOI jsou weby s podobným názvem:") : null));
+    } else {
+      const nalez = najdi(domena);
+      if (nalez) {
+        const w = nalez.zaznam;
+        karta = el("div", { class: "karta v" },
+          hlavicka(IK_VYSTRAHA, "Výstraha: web je na seznamu ČOI", nalez.pres ? `${domena} (patří pod ${nalez.pres})` : domena),
+          el("div", { class: "tel" },
+            el("blockquote", { class: "citace" }, "„" + w.duvod + "“"),
+            el("div", { class: "zdroj" }, "Česká obchodní inspekce, ", el("a", { href: DATA.zdroj, target: "_blank", rel: "noopener" }, "seznam rizikových webů")),
+            el("div", { class: "meta" },
+              el("span", {}, KAT[w.k] || "Jiné důvody"),
+              w.p ? el("span", {}, "Na seznamu od " + fmtDatum(w.p)) : null,
+              el("span", {}, "Data ČOI k " + fmtDatum(DATA.aktualizace)))));
+      } else {
+        const pod = podobne(domena);
+        karta = el("div", { class: "karta o" }, hlavicka(IK_LUPA, "Na seznamu ČOI nenalezeno", domena),
+          el("div", { class: "tel" },
+            pod.length ? blokPodobnych(pod, "Pozor, na seznamu jsou weby s velmi podobným názvem. Podvodné weby často napodobují ty skutečné:") : null,
+            el("p", {}, el("b", {}, "To ještě neznamená, že je e-shop bezpečný."), " ČOI prověří jen část webů a nové podvodné weby vznikají každý den. Než zaplatíš, zkontroluj:"),
+            el("ol", { class: "chk" },
+              el("li", {}, "kdo e-shop provozuje: jméno nebo firma, IČO a adresa"),
+              el("li", {}, el("span", {}, "jestli IČO opravdu existuje v ", el("a", { href: "https://ares.gov.cz/", target: "_blank", rel: "noopener" }, "rejstříku ARES"))),
+              el("li", {}, "recenze na jiných webech, ne jen na stránkách obchodu"),
+              el("li", {}, "podezřele nízké ceny a platbu převodem do zahraničí"))));
+      }
+    }
+    cil.append(karta);
+    if (posunout) cil.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  $("formular").addEventListener("submit", (e) => { e.preventDefault(); vyhodnot($("vstup").value, true); });
+  $("vstup").addEventListener("input", () => { if (!$("vstup").value.trim()) { $("vysledek").innerHTML = ""; history.replaceState(null, "", location.pathname); } });
+
+  $("infoPocet").textContent = fmtCislo(WEBY.length);
+  $("infoDatum").textContent = fmtDatum(DATA.aktualizace);
+  const ukazka = WEBY.find((w) => w.k === "zdravi" && !/[a-z]\?[a-z]/i.test(w.duvod)) || WEBY[0];
+  $("priklady").append("Vyzkoušej: ",
+    el("button", { type: "button", onclick: () => { $("vstup").value = ukazka.d; vyhodnot(ukazka.d, true); } }, ukazka.d),
+    " nebo ",
+    el("button", { type: "button", onclick: () => { $("vstup").value = "alza.cz"; vyhodnot("alza.cz", true); } }, "alza.cz"));
+
+  $("celkem").textContent = fmtCislo(WEBY.length);
+  $("aktualizace").textContent = new Date(DATA.aktualizace).toLocaleString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const pocty = {};
+  WEBY.forEach((w) => { pocty[w.k] = (pocty[w.k] || 0) + 1; });
+  const poradi = Object.keys(pocty).sort((a, b) => (a === "jine") - (b === "jine") || pocty[b] - pocty[a]);
+  const maxPocet = Math.max(...Object.values(pocty));
+  poradi.forEach((k) => {
+    $("pruhy").append(el("button", { class: "pruh", type: "button", onclick: () => { nastavFiltr(k); $("seznam").scrollIntoView({ behavior: "smooth" }); } },
+      el("span", {}, KAT[k]), el("span", { class: "n" }, fmtCislo(pocty[k])),
+      el("span", { class: "stopa" }, el("span", { class: "vypln", style: `width:${(pocty[k] / maxPocet) * 100}%` }))));
+  });
+
+  let aktFiltr = "vse", strana = 1;
+  const NA_STRANU = 30;
+  function nastavFiltr(k) {
+    aktFiltr = k; strana = 1;
+    document.querySelectorAll(".filtr").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
+    vykresliSeznam();
+  }
+  [["vse", "Vše", WEBY.length], ...poradi.map((k) => [k, KAT[k], pocty[k]])].forEach(([k, nazev, n]) => {
+    const b = el("button", { class: "filtr", type: "button", "aria-pressed": String(k === "vse"), onclick: () => nastavFiltr(k) }, nazev, el("span", { class: "n" }, fmtCislo(n)));
+    b.dataset.k = k; $("filtry").append(b);
+  });
+  $("filtrText").addEventListener("input", () => { strana = 1; vykresliSeznam(); });
+  $("vice").addEventListener("click", () => { strana++; vykresliSeznam(); });
+  function vykresliSeznam() {
+    const t = $("filtrText").value.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/^www\./, "");
+    const tj = t.replace(/[^a-z0-9.]/g, "");
+    const vyber = WEBY.filter((w) => (aktFiltr === "vse" || w.k === aktFiltr) && (!t || w.d.includes(t) || (tj && w.d.replace(/-/g, "").includes(tj))))
+      .sort((a, b) => (b.p || "").localeCompare(a.p || "") || a.d.localeCompare(b.d));
+    const ul = $("weby"); ul.innerHTML = "";
+    vyber.slice(0, strana * NA_STRANU).forEach((w) => {
+      ul.append(el("li", {}, el("details", {},
+        el("summary", {}, el("span", { class: "d" }, w.d, w.p ? el("span", { class: "nove" }, "nové") : null), el("span", { class: "k" }, KAT[w.k])),
+        el("div", { class: "duvod" }, w.duvod, el("small", {}, w.p ? "Na seznamu od " + fmtDatum(w.p) : "Zdroj: ČOI")))));
+    });
+    $("pocetVysledku").textContent = vyber.length ? `Zobrazeno ${fmtCislo(Math.min(vyber.length, strana * NA_STRANU))} z ${fmtCislo(vyber.length)}` : "Nic nenalezeno.";
+    $("vice").hidden = vyber.length <= strana * NA_STRANU;
+  }
+  vykresliSeznam();
+
+  function zHashe() {
+    const m = location.hash.match(/^#overit=(.+)$/);
+    if (m) { const d = decodeURIComponent(m[1]); if (naDomenu(d) !== naDomenu($("vstup").value) || !$("vysledek").childNodes.length) { $("vstup").value = d; vyhodnot(d, false); } }
+  }
+  window.addEventListener("hashchange", zHashe);
+  zHashe();
+})();
+</script>

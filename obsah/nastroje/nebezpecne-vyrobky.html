@@ -1,0 +1,298 @@
+---
+nazev: Nebezpečné výrobky
+nadpis: Nemáš doma <em>nebezpečný výrobek?</em>
+popis: Hračky, elektronika, kosmetika a další výrobky, před kterými varují úřady v EU. Hledej podle názvu, značky nebo čárového kódu.
+kratky_popis: Výrobky stažené z trhu kvůli bezpečnosti, hledání i podle čárového kódu.
+na_uvod: ano
+poradi: 4
+hero_prekryv: ano
+---
+<style>
+  .stred { max-width: 900px; margin: -86px auto 0; position: relative; z-index: 3; }
+  .hledani { display: flex; gap: 10px; background: var(--bila); border-radius: 20px; padding: 10px; box-shadow: 0 20px 50px rgba(20,40,115,.25); border: 2px solid transparent; transition: border-color .15s; }
+  .hledani:focus-within { border-color: var(--koral); }
+  .hledani input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 20px; padding: 14px; color: var(--text); }
+  .info { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 16px 4px 0; font-size: 14px; color: var(--tlum); }
+  .info b { color: var(--kobalt); font-size: 15.5px; }
+  .info button { background: none; border: 0; padding: 0; color: var(--kobalt); text-decoration: underline; font-weight: 600; font: inherit; font-size: 14px; }
+  .ovladani { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 18px 0 4px; }
+  .ovladani select { font: inherit; font-size: 15px; padding: 9px 12px; border-radius: 12px; border: 1.5px solid var(--okraj); background: var(--bila); color: var(--text); max-width: 100%; }
+  .prepinac { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; background: var(--bila); border: 1.5px solid var(--okraj); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  .prepinac input { width: 18px; height: 18px; accent-color: var(--kobalt); }
+  .pocet-vysledku { font-size: 14px; color: var(--tlum); margin: 14px 2px 10px; }
+  ul.vyrobky { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  ul.vyrobky > li { background: var(--bila); border-radius: 18px; box-shadow: var(--stin); overflow: hidden; }
+  ul.vyrobky details > summary { list-style: none; cursor: pointer; padding: 14px 18px 14px 14px; display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 4px 14px; align-items: start; }
+  .v-nahled { grid-row: span 3; width: 96px; height: 96px; border-radius: 14px; background: var(--krem); overflow: hidden; display: grid; place-items: center; color: var(--tlum); }
+  .v-nahled img { width: 100%; height: 100%; object-fit: contain; }
+  .v-nahled svg { width: 34px; height: 34px; opacity: .5; }
+  ul.vyrobky details > summary::-webkit-details-marker { display: none; }
+  ul.vyrobky details[open] > summary { border-bottom: 1px solid var(--okraj); }
+  .v-nazev { font-family: var(--f-nadpis); font-size: 19px; line-height: 1.2; color: var(--kobalt); overflow-wrap: anywhere; }
+  .v-nazev small { font-family: var(--f-text); font-size: 14.5px; color: var(--text); font-weight: 500; }
+  .v-datum { font-size: 13.5px; color: var(--tlum); white-space: nowrap; text-align: right; }
+  .v-stitky { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .stitek-v { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--krem); color: var(--text); }
+  .stitek-v.riz { background: var(--karmin-svetly); color: var(--karmin2); }
+  .stitek-v.cz { background: var(--kobalt); color: var(--krem); font-weight: 600; }
+  .v-sipka { grid-column: 2 / -1; font-size: 14px; font-weight: 600; color: var(--karmin); margin-top: 2px; }
+  details[open] .v-sipka { display: none; }
+  .v-detail { padding: 16px 18px 18px; display: grid; gap: 14px; }
+  .v-detail h3 { margin: 0 0 4px; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--kobalt); }
+  .v-detail p { margin: 0; font-size: 15.5px; overflow-wrap: anywhere; }
+  .v-riziko { background: var(--karmin-svetly); border-radius: 12px; padding: 12px 14px; }
+  .v-riziko h3 { color: var(--karmin2); }
+  dl.udaje { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 14.5px; }
+  dl.udaje dt { color: var(--tlum); }
+  dl.udaje dd { margin: 0; overflow-wrap: anywhere; }
+  .v-akce { display: flex; flex-wrap: wrap; gap: 8px; }
+  .v-akce a, .v-akce button { font: inherit; font-size: 14px; font-weight: 600; border-radius: 999px; padding: 7px 14px; border: 1.5px solid var(--kobalt); color: var(--kobalt); background: var(--bila); text-decoration: none; }
+  .v-fotky { display: flex; flex-wrap: wrap; gap: 8px; }
+  .v-fotky img { width: 200px; height: 200px; object-fit: contain; background: var(--krem); border-radius: 12px; max-width: 100%; }
+  .v-fotky p { font-size: 14px; color: var(--tlum); }
+  .vice { display: block; margin: 18px auto 0; font-weight: 600; background: var(--bila); color: var(--kobalt); border: 2px solid var(--kobalt); padding: 10px 22px; border-radius: 12px; font-family: inherit; font-size: 15px; }
+  .vice:hover { background: var(--nebe2); }
+  .prazdno-v { background: var(--bila); border-radius: 18px; padding: 20px; color: var(--tlum); }
+  .cisla { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+  .dlazdice { background: var(--bila); border-radius: 20px; padding: 22px; box-shadow: var(--stin); }
+  .dlazdice.tmava { background: var(--kobalt); color: var(--krem); position: relative; overflow: hidden; }
+  .dlazdice.tmava::after { content: ""; position: absolute; right: -50px; bottom: -50px; width: 140px; height: 140px; border-radius: 50%; background: var(--koral); }
+  .velke-cislo { font-family: var(--f-nadpis); font-weight: 900; font-size: clamp(52px, 8vw, 78px); line-height: 1; color: var(--krem); position: relative; z-index: 1; }
+  .dlazdice.tmava p { margin: 10px 0 0; color: var(--nebe); position: relative; z-index: 1; max-width: 230px; }
+  .dlazdice.tmava p b { color: var(--krem); }
+  .pruhy { display: grid; gap: 10px; }
+  .pruh { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; align-items: center; font-size: 15px; background: none; border: 0; padding: 4px 0; text-align: left; color: inherit; border-radius: 8px; font-family: inherit; }
+  .pruh .stopa { grid-column: 1 / -1; height: 12px; background: var(--krem2); border-radius: 999px; overflow: hidden; }
+  .pruh .vypln { display: block; height: 100%; background: var(--kobalt); border-radius: 999px; min-width: 6px; }
+  .pruh:hover .vypln, .pruh:focus-visible .vypln { background: var(--koral); }
+  .pruh .n { font-variant-numeric: tabular-nums; color: var(--tlum); font-weight: 600; }
+  ol.kroky { margin: 0; padding: 0; list-style: none; counter-reset: k; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  ol.kroky li { counter-increment: k; background: var(--bila); border: 1px solid var(--okraj); border-radius: 16px; padding: 14px 16px 14px 56px; position: relative; font-size: 15.5px; }
+  ol.kroky li::before { content: counter(k); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--kobalt); color: var(--bila); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  ol.kroky b { display: block; color: var(--kobalt); }
+  @media (max-width: 760px) {
+    .stred { margin-top: -78px; }
+    .hledani { padding: 8px; }
+    .hledani input { font-size: 18px; padding: 12px; }
+    .cisla, ol.kroky { grid-template-columns: 1fr; }
+    ul.vyrobky details > summary { padding: 12px 14px 12px 12px; grid-template-columns: 72px minmax(0, 1fr); }
+    .v-nahled { width: 72px; height: 72px; grid-row: span 4; }
+    .v-datum { text-align: left; grid-column: 2; }
+    .v-fotky img { width: calc(50% - 4px); height: auto; aspect-ratio: 1; }
+    .v-detail { padding: 14px 15px 16px; }
+    dl.udaje { grid-template-columns: 1fr; gap: 0; }
+    dl.udaje dd { margin-bottom: 6px; }
+    .ovladani select { flex: 1 1 100%; }
+  }
+</style>
+
+<div class="obal">
+  <div class="stred">
+    <div class="hledani">
+      <label for="vstup" class="sr">Název, značka nebo čárový kód</label>
+      <input id="vstup" type="search" placeholder="Název, značka nebo čárový kód (EAN)" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="info">
+      <span><b id="infoPocet">–</b> varování za poslední 2 roky</span>
+      <span>Nejnovější z <b id="infoDo">–</b></span>
+      <span id="priklady"></span>
+    </div>
+  </div>
+</div>
+
+<section class="sekce" id="seznam" style="padding-top:20px">
+  <div class="obal">
+    <div class="ovladani">
+      <label class="sr" for="filtrKat">Kategorie</label>
+      <select id="filtrKat"><option value="">Všechny kategorie</option></select>
+      <label class="sr" for="filtrRiz">Druh rizika</label>
+      <select id="filtrRiz"><option value="">Všechna rizika</option></select>
+      <label class="prepinac"><input type="checkbox" id="filtrCz"> Nahlásila Česká republika</label>
+    </div>
+    <p class="pocet-vysledku" id="pocetVysledku" aria-live="polite"></p>
+    <ul class="vyrobky" id="vyrobky"></ul>
+    <button class="vice" id="vice" type="button" hidden>Zobrazit další</button>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Našel jsi svůj výrobek?</h2>
+    <p class="sekce-popis">Zkontroluj model, šarži nebo čárový kód. Varování se týká jen konkrétního výrobku, ne celé značky.</p>
+    <ol class="kroky">
+      <li><b>Přestaň ho používat</b>Hlavně jde-li o hračku nebo výrobek pro děti. Elektrospotřebič odpoj ze sítě.</li>
+      <li><b>Podívej se, co dělá výrobce nebo prodejce</b>U stažení od spotřebitelů obvykle nabízí vrácení peněz, výměnu nebo opravu. Odkaz na výzvu najdeš u hlášení, pokud existuje.</li>
+      <li><b>Obrať se na prodejce</b>Výrobek, který nesplňuje bezpečnostní požadavky, má vadu. Můžeš ho reklamovat do 2 let od převzetí.</li>
+      <li><b>Prodávají ho dál?</b>Pokud nebezpečný výrobek pořád vidíš v obchodě nebo na e-shopu, dej vědět České obchodní inspekci.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="sekce" id="cisla">
+  <div class="obal">
+    <h2 class="sekce-nadpis">Varování v číslech</h2>
+    <p class="sekce-popis">Kterých výrobků se varování týkají nejčastěji. Klikni na kategorii a zobrazí se odpovídající výrobky.</p>
+    <div class="cisla">
+      <div class="dlazdice tmava">
+        <div class="velke-cislo" id="podilCina">–</div>
+        <p>varování se týká výrobků z <b>Číny</b></p>
+      </div>
+      <div class="dlazdice"><div class="pruhy" id="pruhy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sekce">
+  <div class="obal">
+    <div class="poznamka">
+      <strong>Odkud data jsou:</strong> Evropská komise, <a href="https://ec.europa.eu/safety-gate-alerts/screen/search" target="_blank" rel="noopener">Safety Gate – systém EU pro rychlé varování před nebezpečnými nepotravinářskými výrobky</a>. Texty jsou oficiální český překlad Komise a přebíráme je beze změny. Data jsme naposledy stáhli <strong id="aktualizace">–</strong>, Komise je vydává každý pátek.
+      Výrobek nahlásil úřad některé evropské země. Nemusel se tedy prodávat v Česku, ale díky e-shopům se sem může dostat. Fotky výrobků na našem webu neukládáme, načítají se přímo ze serverů Evropské komise. Potraviny a léky tu nejsou, ty hlídají jiné úřady.
+    </div>
+  </div>
+</section>
+
+<script src="{{KOREN}}data/vyrobky-index.js"></script>
+<script>
+(function () {
+  "use strict";
+  const D = window.VYROBKY;
+  const $ = (id) => document.getElementById(id);
+  if (!D || !Array.isArray(D.f)) { $("pocetVysledku").textContent = "Data se nepodařilo načíst. Zkus stránku obnovit."; return; }
+
+  const KOREN = "{{KOREN}}";
+  const F = D.f; // [id, datum, výrobek, značka, název, model, EAN, kategorie, [rizika], země, úroveň, z Číny]
+  const CZ = D.zeme.findIndex((z) => /^Česk/.test(z));
+  const fmtCislo = (n) => n.toLocaleString("cs-CZ");
+  const fmtDatum = (iso) => { if (!iso) return "–"; const [r, m, d] = iso.split("-"); return `${+d}. ${+m}. ${r}`; };
+  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const HLEDACI = F.map((f) => norm([f[2], f[3], f[4], f[5], f[6], D.kategorie[f[7]]].join(" ")));
+  const FOTO = "https://ec.europa.eu/safety-gate-alerts/public/api/notification/";
+  const IK_BALIK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>';
+  function nahled(f) {
+    const box = el("span", { class: "v-nahled" });
+    const bezFotky = () => { box.innerHTML = IK_BALIK; };
+    if (!f[12]) { bezFotky(); return box; }
+    const img = el("img", { src: `${FOTO}thumbnail/${f[12]}`, alt: "", loading: "lazy", decoding: "async" });
+    img.addEventListener("error", bezFotky);
+    box.append(img);
+    return box;
+  }
+  const prazdna = (s) => !s || /^(neznámý|neznámá|neuvedeno|-|n\/a)$/i.test(s.trim());
+
+  function el(tag, attrs, ...deti) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "class") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    for (const d of deti.flat()) if (d != null) e.append(d instanceof Node ? d : document.createTextNode(d));
+    return e;
+  }
+
+  // ---------- souhrn a filtry ----------
+  $("infoPocet").textContent = fmtCislo(F.length);
+  $("infoDo").textContent = fmtDatum(D.do);
+  $("aktualizace").textContent = fmtDatum(D.aktualizace);
+  $("podilCina").textContent = Math.round(100 * F.filter((f) => f[11]).length / F.length) + " %";
+  const pk = {}; F.forEach((f) => { pk[f[7]] = (pk[f[7]] || 0) + 1; });
+  const pr = {}; F.forEach((f) => f[8].forEach((r) => { pr[r] = (pr[r] || 0) + 1; }));
+  Object.keys(pk).sort((a, b) => pk[b] - pk[a]).forEach((k) => $("filtrKat").append(el("option", { value: k }, `${D.kategorie[k]} (${fmtCislo(pk[k])})`)));
+  Object.keys(pr).sort((a, b) => pr[b] - pr[a]).forEach((k) => $("filtrRiz").append(el("option", { value: k }, `${D.rizika[k]} (${fmtCislo(pr[k])})`)));
+  const nejKat = Object.keys(pk).sort((a, b) => pk[b] - pk[a]).slice(0, 8);
+  const maxK = pk[nejKat[0]];
+  nejKat.forEach((k) => $("pruhy").append(el("button", { class: "pruh", type: "button", onclick: () => { $("filtrKat").value = k; strana = 1; vykresli(); $("seznam").scrollIntoView({ behavior: "smooth" }); } },
+    el("span", {}, D.kategorie[k]), el("span", { class: "n" }, fmtCislo(pk[k])),
+    el("span", { class: "stopa" }, el("span", { class: "vypln", style: `width:${(pk[k] / maxK) * 100}%` })))));
+
+  // ---------- detail (načítá se po měsících) ----------
+  const nacitane = {};
+  function nactiMesic(m) {
+    if (window.VYROBKY_DETAIL && window.VYROBKY_DETAIL[m]) return Promise.resolve(window.VYROBKY_DETAIL[m]);
+    if (!nacitane[m]) nacitane[m] = new Promise((ok, chyba) => {
+      const s = document.createElement("script");
+      s.src = `${KOREN}data/vyrobky/${m}.js?v=${D.aktualizace}`;
+      s.onload = () => ok((window.VYROBKY_DETAIL || {})[m] || {});
+      s.onerror = () => { delete nacitane[m]; chyba(new Error("nenačteno")); };
+      document.head.append(s);
+    });
+    return nacitane[m];
+  }
+  async function vyplnDetail(f, cil) {
+    let x;
+    try { x = (await nactiMesic(f[1].slice(0, 7)))[f[0]]; } catch (e) { x = null; }
+    cil.innerHTML = "";
+    if (!x) { cil.append(el("p", {}, "Podrobnosti se nepodařilo načíst. Zkus to znovu.")); return; }
+    if (x.popis_rizika) cil.append(el("div", { class: "v-riziko" }, el("h3", {}, "V čem je riziko"), el("p", {}, x.popis_rizika)));
+    if (x.popis) cil.append(el("div", {}, el("h3", {}, "Jak výrobek vypadá"), el("p", {}, x.popis)));
+    const radky = [
+      ["Značka", f[3]], ["Název", f[4]], ["Model / typ", f[5]], ["Čárový kód", f[6]], ["Šarže", x.sarze],
+      ["Země původu", x.puvod], ["Nahlásila", D.zeme[f[9]]], ["Úroveň rizika", D.urovne[f[10]]],
+      ["Opatření", x.opatreni.join(", ")], ["Prodáváno online", x.eshop], ["Číslo hlášení", x.cislo],
+    ].filter(([, v]) => !prazdna(v));
+    cil.append(el("dl", { class: "udaje" }, radky.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])));
+    const fotky = el("div", { class: "v-fotky" });
+    x.fotky.forEach((id) => {
+      const img = el("img", { src: `${FOTO}image/${id}`, alt: `Fotka výrobku ${f[2]}`, loading: "lazy" });
+      img.addEventListener("error", () => { img.remove(); if (!fotky.querySelector("img") && !fotky.querySelector("p")) fotky.append(el("p", {}, "Fotky se tu nenačetly, najdeš je v celém hlášení.")); });
+      fotky.append(img);
+    });
+    const akce = el("div", { class: "v-akce" },
+      el("a", { href: `https://ec.europa.eu/safety-gate-alerts/screen/webReport/alertDetail/${f[0]}?lang=cs`, target: "_blank", rel: "noopener" }, "Celé hlášení na Safety Gate"),
+      x.stazeni && /^https?:/.test(x.stazeni) ? el("a", { href: x.stazeni, target: "_blank", rel: "noopener" }, "Výzva výrobce ke stažení") : null);
+    cil.append(fotky, akce);
+  }
+
+  // ---------- seznam ----------
+  function polozka(f) {
+    const cil = el("div", { class: "v-detail" }, el("p", {}, "Načítám…"));
+    const det = el("details", {},
+      el("summary", {},
+        nahled(f),
+        el("span", { class: "v-nazev" }, f[2] || "Výrobek", " ", !prazdna(f[3]) ? el("small", {}, "· " + f[3]) : null),
+        el("span", { class: "v-datum" }, fmtDatum(f[1])),
+        el("span", { class: "v-stitky" },
+          el("span", { class: "stitek-v" }, D.kategorie[f[7]]),
+          f[8].map((r) => el("span", { class: "stitek-v riz" }, D.rizika[r])),
+          f[9] === CZ ? el("span", { class: "stitek-v cz" }, "Nahlásila ČR") : null),
+        el("span", { class: "v-sipka" }, "Zobrazit podrobnosti")),
+      cil);
+    let hotovo = false;
+    det.addEventListener("toggle", () => { if (det.open && !hotovo) { hotovo = true; vyplnDetail(f, cil); } });
+    return el("li", {}, det);
+  }
+
+  let strana = 1;
+  const NA_STRANU = 20;
+  function vykresli() {
+    const q = norm($("vstup").value.trim());
+    const slova = q.split(/\s+/).filter(Boolean);
+    const kat = $("filtrKat").value, riz = $("filtrRiz").value, jenCz = $("filtrCz").checked;
+    const jeKod = /^\d{6,14}$/.test(q.replace(/\s/g, ""));
+    const kod = q.replace(/\s/g, "");
+    const vyber = [];
+    for (let i = 0; i < F.length; i++) {
+      const f = F[i];
+      if (kat !== "" && f[7] !== +kat) continue;
+      if (riz !== "" && !f[8].includes(+riz)) continue;
+      if (jenCz && f[9] !== CZ) continue;
+      if (jeKod ? !(f[6] || "").replace(/\s/g, "").includes(kod) : !slova.every((s) => HLEDACI[i].includes(s))) continue;
+      vyber.push(f);
+    }
+    const ul = $("vyrobky"); ul.innerHTML = "";
+    vyber.slice(0, strana * NA_STRANU).forEach((f) => ul.append(polozka(f)));
+    if (!vyber.length) ul.append(el("li", { class: "prazdno-v" },
+      q ? `Pro „${$("vstup").value.trim()}“ jsme za poslední 2 roky žádné varování nenašli. To ale neznamená, že je výrobek bezpečný. Zkus i jen značku nebo jiný tvar názvu.` : "Žádné varování neodpovídá filtrům."));
+    $("pocetVysledku").textContent = vyber.length ? `${fmtCislo(vyber.length)} ${vyber.length === 1 ? "varování" : "varování"}, od nejnovějšího` : "";
+    $("vice").hidden = vyber.length <= strana * NA_STRANU;
+    $("vice").textContent = `Zobrazit další (${fmtCislo(Math.max(0, vyber.length - strana * NA_STRANU))})`;
+  }
+  let casovac;
+  $("vstup").addEventListener("input", () => { clearTimeout(casovac); casovac = setTimeout(() => { strana = 1; vykresli(); }, 120); });
+  ["filtrKat", "filtrRiz", "filtrCz"].forEach((id) => $(id).addEventListener("change", () => { strana = 1; vykresli(); }));
+  $("vice").addEventListener("click", () => { strana++; vykresli(); });
+  const ukazky = ["Hračka", "Nabíječka"];
+  $("priklady").append("Vyzkoušej: ", ...ukazky.flatMap((u, i) => [i ? " nebo " : "", el("button", { type: "button", onclick: () => { $("vstup").value = u; strana = 1; vykresli(); } }, u.toLowerCase())]));
+  vykresli();
+})();
+</script>
