@@ -22,6 +22,7 @@ Jakmile soubor existuje, položka se v sekci i na úvodu automaticky přepne z �
 """
 import hashlib
 import html
+import json
 import os
 import re
 import sys
@@ -239,6 +240,245 @@ footer a { color: var(--krem); }
 """
 
 
+# ---------------------------------------------------------------- doplňky vzhledu (z návrhu 2, Hallmark)
+# Nástroje v průvodci: situace (slovy člověka), co k tomu potřebuje, a skutečný údaj z dat
+PRUVODCE = [
+    {"slug": "over-eshop", "situace": "Chci nakoupit na e-shopu, který neznám",
+     "potrebujes": "adresu e-shopu nebo odkaz na zboží",
+     "data": ("rizikove-weby.js", "rizikove-weby", "rizikových webů na seznamu ČOI")},
+    {"slug": "proverit-firmu", "situace": "Chci vědět, jestli je firma poctivá",
+     "potrebujes": "název firmy nebo její IČO",
+     "data": ("firmy-index.js", "firmy", "firem s kontrolou ČOI")},
+    {"slug": "benzinky", "situace": "Chci natankovat tam, kde nešidí",
+     "potrebujes": "obec, ulici nebo název provozovatele",
+     "data": ("benzinky.js", "benzinky", "pravomocných pokut za nekvalitní palivo")},
+    {"slug": "nebezpecne-vyrobky", "situace": "Mám doma výrobek a nevím, jestli je bezpečný",
+     "potrebujes": "název, značku nebo čárový kód z obalu",
+     "data": ("vyrobky-index.js", "vyrobky", "varování EU za poslední dva roky")},
+]
+
+# Bubliny nad vyhledáváním v nástrojích (zmizí, jakmile člověk klikne do pole)
+BUBLINY_NASTROJU = {
+    "over-eshop": "Napiš adresu e-shopu, třeba obchod.cz, nebo sem vlož odkaz.",
+    "proverit-firmu": "Stačí napsat název firmy nebo její IČO.",
+    "benzinky": "Napiš obec nebo ulici, kde obvykle tankuješ.",
+    "nebezpecne-vyrobky": "Opiš název, značku nebo čárový kód z obalu.",
+}
+
+STAMP = r"""/* Hallmark · shape: Guided Index · genre: editorial · theme: brand (by request) · redesign: full
+ * paper: oklch(96.5% 0.013 60) · accent: oklch(55% 0.2 22) · display: Fraunces · body: Work Sans · hero: kept (/) · nav: kept · footer: mast, the logo beside the links · signature: the "Co právě řešíš?" guide, a situation in your words opens the tool with its real count
+ * axes: light/roman-serif/warm · posture: kept · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H3 E4 S4 R4 V4 · weakest: H (the owner keeps the current hero), the guide sits right under it and a bubble points to it */
+/* Hallmark · waive 8 · the owner chose which parts of proposal 1 to keep · the rest is the current site, by request */
+/* Hallmark · waive 38iii · .pas h1 em is display:block, the whole second line in coral · the brand's two-line headline (Instagram, every tool) */
+/* Hallmark · waive 65 · cream, Fraunces and the crimson/coral accents are the owner's brand kit · the user asked to keep the palette, logo and fonts */
+/* Hallmark · waive 24b · the current site's spacing values, kept · the owner asked to keep the current look outside the chosen parts */
+"""
+
+# Doplňky k současnému vzhledu
+DOPLNKY = r"""
+/* ---------- tokeny doplňků ---------- */
+:root {
+  --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+  --na-pasu: color-mix(in oklab, #FBF3EC 14%, transparent);
+  --halo: color-mix(in oklab, #FBF3EC 18%, transparent);
+  --stin-hluboky: 0 20px 50px color-mix(in oklab, #142873 28%, transparent);
+  --stin-bubliny: 0 10px 28px color-mix(in oklab, #142873 22%, transparent);
+  --bila: #FFFCF8;   /* světlá plocha místo čisté bílé (téměř nepoznatelné) */
+  --rychle: 120ms; --stredne: 220ms; --plynule: cubic-bezier(0.16, 1, 0.3, 1);
+}
+html, body { overflow-x: clip; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Nadpis v pásu: barevná část je vždy celý druhý řádek */
+.pas h1 em { display: block; font-style: normal; color: var(--koral); }
+
+/* Jemné podtržení při najetí (jako v rozcestníku) */
+.podtrh { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 2px; text-underline-offset: 0.18em; transition: text-decoration-color var(--stredne) var(--plynule); }
+a.polozka h3 { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 2px; text-underline-offset: 0.18em; transition: text-decoration-color var(--stredne) var(--plynule); }
+a.polozka:hover h3, a.polozka:focus-visible h3 { text-decoration-color: var(--koral); }
+.text a, .poznamka a { text-decoration-color: var(--koral); text-underline-offset: 0.18em; }
+
+/* Tlačítko */
+.akce { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); margin-top: var(--space-lg); max-width: min(760px, 62%); }
+.tlacitko { display: inline-flex; align-items: center; min-height: 52px; padding: 0 var(--space-lg); border-radius: 14px; background: var(--karmin); color: var(--bila); font-weight: 700; text-decoration: none; transition: background-color var(--rychle) var(--plynule), transform var(--rychle) var(--plynule); }
+.tlacitko:hover { background: var(--karmin2); }
+.tlacitko:active { transform: translateY(1px); }
+.tlacitko.svetle { background: var(--kobalt); }
+.tlacitko.svetle:hover { background: var(--kobalt2); }
+
+/* ---------- navigační bubliny ---------- */
+.bublina { position: relative; margin: 0; max-width: 300px; padding: var(--space-sm) var(--space-md); border-radius: 18px; background: var(--koral); color: var(--text); font-weight: 600; font-size: 15px; line-height: 1.35; box-shadow: var(--stin-bubliny); animation: bublina-ven 420ms var(--plynule) 300ms both; transition: opacity var(--stredne) var(--plynule), transform var(--stredne) var(--plynule); }
+.bublina::after { content: ""; position: absolute; width: 14px; height: 14px; background: var(--koral); transform: rotate(45deg); }
+.bublina-vlevo::after { left: -6px; top: calc(50% - 7px); }
+.bublina-dolu::after { left: 32px; bottom: -6px; }
+@keyframes bublina-ven { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+/* Bublina nad vyhledáváním nástroje: když člověk klikne do pole, splnila úkol a zmizí */
+.stred > .bublina { position: absolute; right: 24px; bottom: calc(100% + 18px); z-index: 4; }
+.stred:focus-within > .bublina { opacity: 0; transform: translateY(-4px); pointer-events: none; }
+
+/* ---------- úvod: proč tenhle web ---------- */
+.proc { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; }
+.proc h2 { font-family: var(--f-nadpis); font-weight: 900; color: var(--kobalt); font-size: clamp(30px, 4.5vw, 46px); line-height: 1.05; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.proc .uvodni { font-size: 19px; line-height: 1.6; margin: 0 0 var(--space-lg); max-width: 60ch; }
+.proc ul { grid-column: 1 / -1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+.proc li { padding-top: var(--space-sm); border-top: 2px solid var(--kobalt); }
+.proc li b { display: block; font-family: var(--f-nadpis); font-size: 19px; line-height: 1.2; color: var(--kobalt); margin-bottom: var(--space-2xs); }
+.proc li span { font-size: 15px; color: var(--tlum); }
+
+/* ---------- průvodce „Co právě řešíš?“ ---------- */
+.pruvodce { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; }
+.situace-seznam { display: grid; gap: var(--space-xs); }
+.situace-sloupec .bublina { margin-bottom: var(--space-md); }
+.situace { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 2px var(--space-sm); align-items: center; padding: var(--space-md); border-radius: 18px; border: 1.5px solid var(--okraj); background: var(--bila); color: var(--text); text-decoration: none; transition: background-color var(--stredne) var(--plynule), border-color var(--stredne) var(--plynule), color var(--stredne) var(--plynule); }
+.situace .ik { grid-row: span 2; width: 28px; height: 28px; color: var(--kobalt); }
+.situace b { font-family: var(--f-nadpis); font-size: 19px; line-height: 1.2; text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 2px; text-underline-offset: 0.18em; transition: text-decoration-color var(--stredne) var(--plynule); }
+.situace span { font-size: 14px; color: var(--tlum); }
+.situace:hover { border-color: var(--kobalt); }
+.situace:hover b { text-decoration-color: var(--koral); }
+.situace:active { background: var(--krem2); }
+.situace[aria-selected="true"] { background: var(--kobalt); border-color: var(--kobalt); color: var(--krem); }
+.situace[aria-selected="true"] .ik { color: var(--koral); }
+.situace[aria-selected="true"] span { color: var(--nebe); }
+.panel { background: var(--bila); border-radius: 20px; padding: 28px; border: 1.5px solid var(--okraj); }
+.panel + .panel { margin-top: var(--space-md); }
+.js .panel + .panel { margin-top: 0; }
+.js .panel[hidden] { display: none; }
+.panel .fakt { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2xs) var(--space-sm); padding-bottom: var(--space-md); margin-bottom: var(--space-md); border-bottom: 1px solid var(--okraj); }
+.panel .cislo { font-family: var(--f-nadpis); font-weight: 900; font-size: clamp(48px, 6vw, 76px); line-height: .95; letter-spacing: -.03em; color: var(--kobalt); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.panel .popisek { color: var(--tlum); font-size: 15px; }
+.panel h3 { font-family: var(--f-nadpis); font-size: clamp(26px, 3vw, 34px); line-height: 1.1; color: var(--kobalt); margin: 0 0 var(--space-xs); }
+.panel p { margin: 0 0 var(--space-md); max-width: 58ch; }
+.panel dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-xs) var(--space-md); margin: 0 0 var(--space-lg); font-size: 15px; }
+.panel dt { color: var(--tlum); }
+.panel dd { margin: 0; font-weight: 600; }
+
+/* ---------- brzy přibude: obyčejný seznam ---------- */
+.chystame { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg) 32px; }
+.chystame li { padding-top: var(--space-sm); border-top: 2px solid var(--kobalt); }
+.chystame b { display: block; font-family: var(--f-nadpis); font-size: 20px; line-height: 1.2; color: var(--text); }
+.chystame span { display: block; margin-top: var(--space-2xs); font-size: 14px; color: var(--tlum); }
+
+/* ---------- Všechno na webu (z návrhu 1) ---------- */
+.pas-sekci { background: var(--krem2); margin-top: 72px; padding-block: var(--space-2xl); }
+.pas-sekci h2 { font-family: var(--f-nadpis); font-weight: 900; color: var(--kobalt); font-size: clamp(28px, 4.5vw, 46px); line-height: 1.05; letter-spacing: -.02em; margin: 0 0 var(--space-xl); }
+.vse-na-webu { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.vse-na-webu a { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); padding-block: var(--space-lg); border-top: 1px solid var(--okraj); color: var(--text); text-decoration: none; }
+.vse-na-webu .ik { grid-row: span 2; width: 32px; height: 32px; color: var(--kobalt); margin-top: var(--space-2xs); }
+.vse-na-webu b { font-family: var(--f-nadpis); font-size: 25px; line-height: 1.15; color: var(--kobalt); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 2px; text-underline-offset: 0.18em; transition: text-decoration-color var(--stredne) var(--plynule); }
+.vse-na-webu span { font-size: 14px; color: var(--tlum); }
+.vse-na-webu a:hover b, .vse-na-webu a:focus-visible b { text-decoration-color: var(--koral); }
+main:has(.pas-sekci) + footer { margin-top: 0; }
+
+/* ---------- patička (z návrhu 1) ---------- */
+footer { padding-block: var(--space-2xl); }
+.paticka { grid-template-columns: 120px minmax(0, 1fr) minmax(0, 14rem); gap: 32px; }
+.mini-kruh { width: 120px; }
+.paticka .wordmark { font-size: 25px; margin-bottom: var(--space-sm); }
+.paticka h2 { font-size: 14.5px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.paticka ul { gap: var(--space-2xs); }
+footer a { text-underline-offset: 0.18em; transition: text-decoration-color var(--stredne) var(--plynule); }
+footer a:hover { text-decoration-color: var(--koral); }
+
+.sekce-hlava { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-xs) 32px; margin-bottom: var(--space-lg); }
+.sekce-hlava .sekce-nadpis { margin: 0; }
+.sekce-hlava .sekce-popis { margin: 0; }
+
+@media (max-width: 960px) {
+  .proc, .pruvodce { grid-template-columns: minmax(0, 1fr); }
+  .chystame { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .akce { max-width: none; }
+  .bublina-vlevo::after { left: 32px; top: -6px; }
+  .stred > .bublina { position: static; margin: 0 0 var(--space-sm); max-width: none; }
+  .proc ul, .chystame, .vse-na-webu { grid-template-columns: minmax(0, 1fr); }
+  .panel { padding: 20px; }
+  .paticka { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+  .paticka ul a { display: block; padding-block: var(--space-xs); }
+}
+@media (prefers-reduced-motion: reduce) { .bublina { animation: none; } }
+"""
+
+SKRIPT_PRUVODCE = """
+<script>
+(function () {
+  var seznam = document.querySelector("[role=tablist]");
+  if (!seznam) return;
+  document.documentElement.classList.add("js");
+  var karty = Array.prototype.slice.call(seznam.querySelectorAll("[role=tab]"));
+  function vyber(karta, zamerit) {
+    karty.forEach(function (k) {
+      var ano = k === karta;
+      k.setAttribute("aria-selected", ano ? "true" : "false");
+      k.tabIndex = ano ? 0 : -1;
+      document.getElementById(k.getAttribute("aria-controls")).hidden = !ano;
+    });
+    if (zamerit) karta.focus();
+  }
+  karty.forEach(function (k, i) {
+    k.addEventListener("click", function (e) { e.preventDefault(); vyber(k, false); });
+    k.addEventListener("keydown", function (e) {
+      var j = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: karty.length - 1 }[e.key];
+      if (j === undefined) return;
+      e.preventDefault();
+      vyber(karty[(j + karty.length) % karty.length], true);
+    });
+  });
+  vyber(karty[0], false);
+})();
+</script>
+"""
+
+
+def pocet_zaznamu(soubor: Path) -> int:
+    text = soubor.read_text(encoding="utf-8").strip()
+    data = json.loads(text[text.index("=") + 1:].rstrip(";").strip())
+    return max((len(v) for v in data.values() if isinstance(v, list)), default=0)
+
+
+def cislo(n: int) -> str:
+    return f"{n:,}".replace(",", " ")
+
+
+def styl_webu() -> str:
+    """Základní vzhled (STYL) s opravami, které nejsou vidět, a doplňky (úvod, průvodce, bubliny, patička)."""
+    s = STYL.strip()
+    s = s.replace("rgba(251,243,236,.14)", "var(--na-pasu)").replace("rgba(251,243,236,.18)", "var(--halo)")
+    s = s.replace("0 20px 50px rgba(20,40,115,.3)", "var(--stin-hluboky)")
+    s = s.replace("font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;", "font-size: 13px; font-weight: 600;")
+    s = s.replace(".paticka { display: grid; grid-template-columns: auto 1fr auto;", ".paticka { display: grid; grid-template-columns: auto minmax(0, 1fr) auto;")
+    s = s.replace(".paticka { grid-template-columns: 1fr;", ".paticka { grid-template-columns: minmax(0, 1fr);")
+    return STAMP + na_skalu(s) + "\n" + DOPLNKY.strip() + "\n"
+
+
+SKALA = {"4": "2xs", "8": "xs", "12": "sm", "16": "md", "24": "lg", "40": "xl", "64": "2xl"}
+
+
+def na_skalu(css: str) -> str:
+    """Rozestupy, které sedí na škálu (4, 8, 12, 16, 24, 40, 64 px), převede na tokeny. Vzhled se nemění."""
+    def dekl(m):
+        return re.sub(r"(?<![\w.-])(\d+)px\b", lambda x: f"var(--space-{SKALA[x.group(1)]})" if x.group(1) in SKALA else x.group(0), m.group(0))
+    return re.sub(r"(?<![\w-])(?:gap|row-gap|column-gap|margin(?:-[a-z]+)?|padding(?:-[a-z]+)?)\s*:[^;}]+", dekl, css)
+
+
+def uprav_nastroj(slug: str, telo: str) -> str:
+    """Nástroj: kód, id a rozvržení beze změny. Přibude bublina nad vyhledáváním, pomlčky v textu → čárka."""
+    m = re.search(r"<style>(.*?)</style>", telo, flags=re.S)
+    if m:
+        styl = m.group(1)
+        styl = re.sub(r"0 20px 50px rgba\(20,40,115,\.2[25]\)", "var(--stin-hluboky)", styl)
+        styl = styl.replace("text-transform: uppercase; letter-spacing: .05em;", "")
+        styl = styl.replace(".nove { background: var(--koral);", ".nove { background: var(--karmin);")
+        styl = "\n  /* Hallmark · waive 24b · the tool's own spacing, kept from obsah/nastroje · the owner keeps the tools' current look */\n" + na_skalu(styl)
+        telo = telo[:m.start(1)] + styl + telo[m.end(1):]
+    if slug in BUBLINY_NASTROJU:
+        telo = telo.replace('<div class="stred">', f'<div class="stred">\n    <p class="bublina bublina-dolu">{e(BUBLINY_NASTROJU[slug])}</p>', 1)
+    kusy = re.split(r"(<script.*?</script>)", telo, flags=re.S)
+    return "".join(k if k.startswith("<script") else k.replace(" – ", ", ").replace(">–<", ">…<") for k in kusy)
+
+
+
 # ---------------------------------------------------------------- pomocné funkce
 def nacti(soubor: Path):
     """Načte soubor s hlavičkou (--- … ---) a vrátí (hlavička, tělo)."""
@@ -371,7 +611,7 @@ def main():
     obsah_dir = slozka / "obsah"
     web = slozka / "web"
     (web / "assets").mkdir(parents=True, exist_ok=True)
-    (web / "assets" / "styl.css").write_text(STYL.strip() + "\n", encoding="utf-8")
+    (web / "assets" / "styl.css").write_text(styl_webu(), encoding="utf-8")
     sekce_podle_slugu = {s["slug"]: s for s in SEKCE}
     vytvoreno = []
 
@@ -407,7 +647,7 @@ def main():
         koren = "../../"
         hlav = p["hlav"]
         if p["typ"] == ".html":
-            obsah = p["telo"].replace("{{KOREN}}", koren)
+            obsah = uprav_nastroj(p["slug"], p["telo"]).replace("{{KOREN}}", koren)
             # Datové soubory dostanou „otisk“ obsahu (?v=…), aby prohlížeč po aktualizaci dat nenačetl starou verzi
             # ze své mezipaměti. Otisk se mění jen tehdy, když se data opravdu změní.
             obsah = re.sub(r'src="([^"?]*?data/([\w-]+\.js))"',
@@ -420,7 +660,7 @@ def main():
             kusy = [x for x in (hlav.get("rubrika"), f"{dt.day}. {dt.month}. {dt.year}" if dt else None) if x]
             meta = '<div class="meta-clanku">' + "".join(f"<span>{e(k)}</span>" for k in kusy) + "</div>" if kusy else ""
         hero = {"nadpis": hlav.get("nadpis", e(p["nazev"])), "sub": hlav.get("popis", p["kratky_popis"]),
-                "drobky": f'<a href="{koren}{s["slug"]}/index.html">{e(s["nazev"])}</a> ›',
+                "drobky": f'<a href="{koren}{s["slug"]}/index.html">{e(s["nazev"])}</a>',
                 "prekryv": ano(hlav.get("hero_prekryv", "ne")), "meta": meta}
         cil = web / p["sekce"] / p["slug"] / "index.html"
         cil.parent.mkdir(parents=True, exist_ok=True)
@@ -458,24 +698,73 @@ def main():
                                {"nadpis": e(hlav.get("nazev", soubor.stem)), "sub": hlav.get("popis", "")}, obsah), encoding="utf-8")
         vytvoreno.append(cil)
 
-    # 5) Úvodní stránka
+    # 5) Úvodní stránka = rozcestník: úvod, průvodce „Co právě řešíš?“, brzy přibude, všechno na webu
+    stav = {}
+    if (web / "data" / "stav-aktualizace.json").exists():
+        stav = json.loads((web / "data" / "stav-aktualizace.json").read_text(encoding="utf-8"))
     koren = ""
-    na_uvod = sorted((p for p in polozky.values() if p["na_uvod"]), key=lambda p: (p["poradi"], p["nazev"]))
-    rozcestnik = "".join(
-        f'<a href="{s["slug"]}/index.html">{svg(s["ikona"])}<b>{e(s["nazev"])}</b><span>{e(s["popis"])}</span></a>' for s in SEKCE)
+    situace, panely = [], []
+    for i, n in enumerate(PRUVODCE):
+        p = polozky.get(("nastroje", n["slug"]))
+        if not p or not p["hotovo"]:
+            continue
+        soubor, klic, popisek = n["data"]
+        pocet = pocet_zaznamu(web / "data" / soubor)
+        iso = (stav.get(klic) or {}).get("naposledy_uspech", "")[:10]
+        kdy = f"{int(iso[8:10])}. {int(iso[5:7])}. {iso[:4]}" if iso else "–"
+        zdroj = "Evropská komise (Safety Gate)" if n["slug"] == "nebezpecne-vyrobky" else "Česká obchodní inspekce"
+        print(f"  {n['slug']}: {pocet} {popisek} (data k {kdy})", flush=True)
+        situace.append(
+            f'<a class="situace" role="tab" id="tab-{n["slug"]}" href="#panel-{n["slug"]}" aria-controls="panel-{n["slug"]}" aria-selected="{"true" if i == 0 else "false"}">'
+            f'{svg("nastroj")}<b>{e(n["situace"])}</b><span>{e(p["nazev"])}</span></a>')
+        panely.append(
+            f'<div class="panel" role="tabpanel" id="panel-{n["slug"]}" aria-labelledby="tab-{n["slug"]}">'
+            f'<div class="fakt"><span class="cislo">{cislo(pocet)}</span><span class="popisek">{e(popisek)}</span></div>'
+            f'<h3>{e(p["nazev"])}</h3><p>{e(p["hlav"].get("popis", p["kratky_popis"]))}</p>'
+            f'<dl><dt>Budeš potřebovat</dt><dd>{e(n["potrebujes"])}</dd>'
+            f'<dt>Odkud jsou data</dt><dd>{e(zdroj)}, stav k {e(kdy)}</dd>'
+            f'<dt>Cena</dt><dd>Zdarma, bez registrace</dd></dl>'
+            f'<a class="tlacitko" href="nastroje/{n["slug"]}/index.html">Otevřít {e(p["nazev"])}</a></div>')
+
+    brzy = sorted((p for p in polozky.values() if p["na_uvod"] and not p["hotovo"]), key=lambda p: (p["poradi"], p["nazev"]))
+    chystame = '<ul class="chystame">' + "".join(
+        f'<li><b>{e(p["nazev"])}</b><span>{e(sekce_podle_slugu[p["sekce"]]["nazev"])}: {e(p["kratky_popis"])}</span></li>' for p in brzy) + "</ul>"
+    vse = "".join(
+        f'<li><a href="{s["slug"]}/index.html">{svg(s["ikona"])}<b>{e(s["nazev"])}</b><span>{e(s["popis"])}</span></a></li>' for s in SEKCE)
+
     obsah = f"""
-<section class="sekce"><div class="obal">
-  <h2 class="sekce-nadpis">Praktické pomůcky</h2>
-  <p class="sekce-popis">Nástroje, práva, návody a vzory na jednom místě. Vyber, co zrovna řešíš.</p>
-  <div class="mrizka">{"".join(dlazdice(koren, p, sekce_podle_slugu) for p in na_uvod)}</div>
+<section class="sekce"><div class="obal proc">
+  <h2>Spotřebitel jsi každý den.</h2>
+  <p class="uvodni">Kupuješ jídlo, platíš za telefon, objednáváš z e-shopu nebo tankuješ. Pokaždé máš práva, o kterých se moc nemluví. Tady je najdeš srozumitelně, spolu s nástroji, které ti pomůžou se rozhodnout.</p>
+    <ul>
+      <li><b>Data přímo od úřadů</b><span>Nástroje berou otevřená data České obchodní inspekce a Evropské komise. U každého vidíš, odkud a z kdy jsou.</span></li>
+      <li><b>Zdarma a bez registrace</b><span>Nic neplatíš a nikde se nepřihlašuješ.</span></li>
+      <li><b>Co hledáš, zůstane u tebe</b><span>Hledání probíhá přímo v tvém prohlížeči, nikam ho neodesíláme.</span></li>
+    </ul>
+</div></section>
+<section class="sekce" id="pruvodce"><div class="obal">
+  <div class="sekce-hlava"><h2 class="sekce-nadpis">Co právě řešíš?</h2><p class="sekce-popis">Vyber situaci a ukážeme ti, který nástroj ti pomůže.</p></div>
+  <div class="pruvodce">
+    <div class="situace-sloupec">
+      <p class="bublina bublina-dolu">Klikni na situaci, která sedí na tebe.</p>
+      <div class="situace-seznam" role="tablist" aria-label="Situace" aria-orientation="vertical">{"".join(situace)}</div>
+    </div>
+    <div>{"".join(panely)}</div>
+  </div>
 </div></section>
 <section class="sekce"><div class="obal">
-  <h2 class="sekce-nadpis">Všechno na webu</h2>
-  <p class="sekce-popis">Každá sekce postupně poroste.</p>
-  <div class="rozcestnik">{rozcestnik}</div>
-</div></section>"""
+  <div class="sekce-hlava"><h2 class="sekce-nadpis">Brzy přibude</h2><p class="sekce-popis">Na těchhle pomůckách právě pracujeme.</p></div>
+  {chystame}
+</div></section>
+<section class="pas-sekci"><div class="obal">
+  <h2>Všechno na webu</h2>
+  <ul class="vse-na-webu">{vse}</ul>
+</div></section>
+{SKRIPT_PRUVODCE}"""
+    akce = ('<div class="akce"><a class="tlacitko" href="#pruvodce">Co právě řešíš?</a>'
+            '<p class="bublina bublina-vlevo">Nevíš, kde začít? Tady ti ukážeme cestu.</p></div>')
     hero = {"uvod": True, "nadpis": "Jsem spotřebitel. <em>A ty taky.</em>",
-            "sub": "Praktické pomůcky, tvoje práva a návody srozumitelně a na jednom místě."}
+            "sub": "Praktické pomůcky, tvoje práva a návody srozumitelně a na jednom místě.", "meta": akce}
     (web / "index.html").write_text(stranka(koren, "jsem spotřebitel", "", hero, obsah), encoding="utf-8")
     vytvoreno.append(web / "index.html")
 
