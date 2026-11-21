@@ -38,9 +38,8 @@ jobs:
   aktualizace:
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    environment:
-      name: github-pages
-      url: ${{ steps.zverejneni.outputs.page_url }}
+    outputs:
+      problemy: ${{ steps.akt.outputs.problemy }}
     steps:
       - uses: actions/checkout@v4
 
@@ -92,10 +91,6 @@ jobs:
         with:
           path: web
 
-      - name: Zveřejnění webu
-        id: zverejneni
-        uses: actions/deploy-pages@v4
-
       - name: Úkol k ověření adres benzinek
         if: steps.akt.outputs.k_overeni != '0' && steps.akt.outputs.k_overeni != ''
         env:
@@ -106,8 +101,21 @@ jobs:
           if [ -n "$CISLO" ]; then gh issue comment "$CISLO" --body-file k-overeni.md
           else gh issue create --title "$NAZEV" --body-file k-overeni.md; fi
 
+  # Zveřejnění je samostatný krok až po dokončení aktualizace (GitHub tak spolehlivě najde nahraný web).
+  # Když se web nepodařilo postavit, aktualizace skončí chybou a nic se nezveřejní.
+  zverejneni:
+    needs: aktualizace
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.zverejneni.outputs.page_url }}
+    steps:
+      - name: Zveřejnění webu
+        id: zverejneni
+        uses: actions/deploy-pages@v4
+
       - name: Upozornění na problém (GitHub pošle e-mail)
-        if: steps.akt.outputs.problemy != '0'
+        if: needs.aktualizace.outputs.problemy != '0'
         run: |
           echo "Některý zdroj se nepodařilo aktualizovat – podrobnosti v souhrnu běhu. Na webu zůstala předchozí data."
           exit 1
