@@ -1,9 +1,9 @@
 {
  "rizikove-weby": {
-  "naposledy_pokus": "2026-11-21T14:10+00:00",
+  "naposledy_pokus": "2026-11-21T14:11+00:00",
   "vysledek": "ok",
   "zprava": "",
-  "naposledy_uspech": "2026-11-21T14:10+00:00",
+  "naposledy_uspech": "2026-11-21T14:11+00:00",
   "pocet": 1337,
   "predchozi_pocet": 1337
  },
@@ -16,18 +16,18 @@
   "predchozi_pocet": 0
  },
  "benzinky": {
-  "naposledy_pokus": "2026-11-21T14:10+00:00",
+  "naposledy_pokus": "2026-11-21T14:11+00:00",
   "vysledek": "ok",
   "zprava": "",
-  "naposledy_uspech": "2026-11-21T14:10+00:00",
+  "naposledy_uspech": "2026-11-21T14:11+00:00",
   "pocet": 66,
   "predchozi_pocet": 66
  },
  "vyrobky": {
-  "naposledy_pokus": "2026-11-21T14:10+00:00",
+  "naposledy_pokus": "2026-11-21T14:11+00:00",
   "vysledek": "ok",
   "zprava": "",
-  "naposledy_uspech": "2026-11-21T14:10+00:00",
+  "naposledy_uspech": "2026-11-21T14:11+00:00",
   "pocet": 8771,
   "predchozi_pocet": 8771
  }
