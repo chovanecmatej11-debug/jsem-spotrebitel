@@ -1,10 +1,10 @@
 {
  "rizikove-weby": {
-  "naposledy_pokus": "2026-11-23T14:37+00:00",
+  "naposledy_pokus": "2026-11-24T14:51+00:00",
   "vysledek": "ok",
   "zprava": "",
-  "naposledy_uspech": "2026-11-23T14:37+00:00",
-  "pocet": 1337,
+  "naposledy_uspech": "2026-11-24T14:51+00:00",
+  "pocet": 1362,
   "predchozi_pocet": 1337
  },
  "firmy": {
@@ -16,10 +16,10 @@
   "predchozi_pocet": 34542
  },
  "benzinky": {
-  "naposledy_pokus": "2026-11-23T14:37+00:00",
+  "naposledy_pokus": "2026-11-24T14:51+00:00",
   "vysledek": "ok",
   "zprava": "",
-  "naposledy_uspech": "2026-11-23T14:37+00:00",
+  "naposledy_uspech": "2026-11-24T14:51+00:00",
   "pocet": 66,
   "predchozi_pocet": 66
  },
